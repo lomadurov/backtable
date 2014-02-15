@@ -14,14 +14,13 @@
                     <col class="b-backtable__col_size_min">
                     <col class="b-backtable__col_size_min">
                     <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
                 </colgroup>
                 <thead>
-                <tr>
-                    <th class="b-backtable__th"><div class="b-checkbox"><div class="b-checkbox__option"></div></div></th>
-                    <th class="b-backtable__th">Head first</th>
-                    <th class="b-backtable__th">Last</th>
-                    <th class="b-backtable__th">Second</th>
-                </tr>
                 </thead>
             </table>
         </div>
@@ -32,6 +31,11 @@
                     <col class="b-backtable__col_size_min">
                     <col class="b-backtable__col_size_min">
                     <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
+                    <col class="b-backtable__col_size_min">
                 </colgroup>
                 <tbody>
 
@@ -39,6 +43,18 @@
             </table>
         </div>
     </div>
+
+    <script type="text/template" id="template-header-row">
+        <% if (sorting){ %>
+        <th class="b-backtable__td" data-sorting="<%= name%>">
+            <%= label || name%> <span class="b-backtable__arrow<%= (index === 0) ? ' b-backtable__arrow_direction_down' : '' %>"></span>
+        </th>
+        <% } else { %>
+        <th class="b-backtable__td">
+            <%= label || name%>
+        </th>
+        <% } %>
+    </script>
 
 
     <script src="./bower_components/jquery/jquery.min.js"></script>

@@ -7,12 +7,33 @@ body {
 }
 
 .b-backtable {
+    &__arrow {
+        background: url("../imgs/table.list.arrow.png") -16px 0px;
+        opacity: 0.3;
+        float: right;
+        width: 16px;
+        height: 16px;
+        &_direction_down {
+            background-position: 0px 0px;
+            opacity: 1;
+        }
+        &_direction_mc {
+            background-position: -16px 0px;
+            opacity: 0.3;
+        }
+        &_direction_up {
+            background-position: -32px 0px;
+            opacity: 1;
+        }
+    }
+    // ------------------------------------
     &__col_size_min {
-        width: 33%;
+        width: 12%;
     }
     &__col_size_checkbox {
         width: 50px;
     }
+    // --------------------------------------
     &__th {
         color: #ababab;
         background: #fff;
@@ -26,6 +47,22 @@ body {
     }
     &__td {
         padding: 5px 6px;
+
+        vertical-align: middle;
+        cursor: pointer;
+        height: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &_select_no {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
         &:hover {
             background: #FFFFCC;
         }
@@ -38,7 +75,6 @@ body {
     &__header_shadow_yes {
         box-shadow: 0 2px 9px -2px #cecece;
     }
-
     // box-shadow: 0 2px 9px -2px #cecece;
     &__content-wrapper {
         overflow: auto;

@@ -2,7 +2,8 @@
 (function () {
     "use strict";
 
-    var template = _.template("<td class='b-backtable__td'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>");
+    var template = _.template("<td class='b-backtable__td'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>"),
+        headerRow = _.template($('#template-header-row').html());
 
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
@@ -30,7 +31,7 @@
             $(this.el).empty();
             /* NEW */
             $(this.el).html(template(this.model.toJSON()));
-            //$(this.el).bind('mouseenter mouseleave focusin focusout', this.onHover);
+            //$(this.el).bind('mouseenter mouseleave focusin focusout', this.onHover);a
             $(this.el).bind('click', $.proxy(this.click, this));
             $(this.el).bind('keypress', $.proxy(this.keypress, this));
             $(this.el).toggleClass('update', !!this.model.update);
@@ -42,22 +43,96 @@
             $(this.el).empty().remove();
         }
     });
+    /*// TODO: Maybe ???
+    var HeaderRowModel = Backbone.Model.extend({
+    });
+    var HeaderCollection = Backbone.Model.extend({
+        model: Backbone.Model
+    });*/
+    var BackTableHeader = Backbone.View.extend({
+        tagName: 'tr',
+        className: 'backtable__header-tr',
+        sort: {
+            current: undefined,
+            currentField: undefined,
+            direction: 0
+        },
+        initialize: function (options) {
+            console.log(options);
+            this.columns = options.columns;
+            this.parent = options.parent;
+            //this.collection = new HeaderCollection()
+            this.render();
+            return this;
+        },
+        render: function () {
+            var self = this;
+
+            // TODO: использовать компонент LCheckbox
+            this.$el.append($("<th class='b-backtable__td'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></th>"));
+
+            this.$els = {};
+            _.each(this.columns, function (column, index) {
+                var element = $(headerRow(_.extend(column, {index: index})));
+                this.$el.append(element);
+                if (column.sorting) {
+                    // Запишим хеш колонки сортировки
+                    this.$els[column.name] = {
+                        th: element,
+                        span: $('.b-backtable__arrow', element)
+                    };
+                    element.bind('click', _.bind(this.sorting, this));
+                }
+            }, this);
+            return this;
+        },
+        sorting: function (e) {
+            var field = $(e.target).data('sorting');
+            if (!field) {
+                return false;
+            }
+
+            // Удаляем струлку у текущей сортировки
+            if (this.sort.current) {
+                this.sort.current.span.delMod('direction');
+            }
+
+            if (!this.sort.current || this.sort.current.th.data('sorting') !== field) {
+                this.sort.current = this.$els[field];
+                this.sort.direction = -1;
+            } else {
+                this.sort.direction = -this.sort.direction;
+            }
+            this.sort.current.span.setMod('direction', this.sort.direction === 1 ? 'up' : 'down');
+            console.log(this.sort.current);
+            this.parent.collection.setSorting(field, this.sort.direction, {full: true});
+            this.parent.collection.fetch();
+        }
+    });
     var BackTable = Backbone.View.extend({
         options: {
-            colums: [],
-            test: ''
+            columns: [],
+            checkbox: true,
+            // TODO: issue #8
+            userSelect: true,
+            // TODO: issue #9
+            sorting: false
         },
         collection: undefined,
         /**
          * @constructor
          */
-        initialize: function () {
+        initialize: function (options) {
+            _.extend(this.options, options);
             this.list = [];
             console.log('initialize test', this.collection, arguments);
             //this.collection.bind()
             this.listenTo(this.collection, 'add', this._add);
             this.listenTo(this.collection, 'remove', this._remove);
             this.listenTo(this.collection, 'reset', this._reset);
+
+            this.header = new BackTableHeader({columns: options.columns, checkbox: this.options.checkbox, parent: this});
+
             this.render();
         },
 
@@ -68,6 +143,8 @@
                 'content-wrapper': this.$el.elem('content-wrapper'),
                 'content': this.$el.elem('content')
             };
+            console.log(this.header.$el);
+            this.$els['header'].children('thead').append(this.header.$el);
 
             this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
             $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
@@ -103,8 +180,8 @@
             }
             // Если мы приближаймся к концу списка то покажем ещё элементов
             /*if (this.options.wraper.scrollTop() + 50 >= this.$el.height() - this.options.wraper.height()) {
-                this.showNew();
-            }*/
+             this.showNew();
+             }*/
         },
         resizeWindow: function () {
             var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - 5,
@@ -121,7 +198,6 @@
     var Model = Backbone.Model.extend({
         idAttribute: 'acctid'
     });
-
     var Collection = Backbone.PageableCollection.extend({
         url: '/api/sip_cdr/list',
         model: Model,
@@ -130,7 +206,7 @@
             firstPage: 0,
             pageSize: 25
         },
-        parse: function(response) {
+        parse: function (response) {
             // TODO: Добавить обработку неправильного ответа
             this.state = this._checkState(_.extend({}, this.state, {
                 currentPage: response.state.page,
@@ -145,8 +221,56 @@
     });
 
     $(document).ready(function () {
-        var collection = new Collection();
-        var bt = new BackTable({el: $('.b-backtable'), collection: collection});
+        var collection = new Collection(),
+            bt = new BackTable({
+                el: $('.b-backtable'),
+                collection: collection,
+                userSelect: true,
+                sorting: false,
+                checkbox: true,
+                columns: [
+                    {
+                        name: 'acctid',
+                        label: 'ID',
+                        sorting: true
+                    },
+                    {
+                        name: 'calldate',
+                        label: 'calldate',
+                        sorting: true
+                    },
+                    {
+                        name: 'src',
+                        label: 'src',
+                        sorting: true
+                    },
+                    {
+                        name: 'dst',
+                        label: 'dst',
+                        sorting: false
+                    },
+                    {
+                        name: 'duration',
+                        label: 'duration',
+                        sorting: false
+                    },
+                    {
+                        name: 'billsec',
+                        label: 'billsec',
+                        sorting: true
+                    },
+                    {
+                        name: 'disposition',
+                        label: 'disposition',
+                        sorting: true
+                    },
+                    {
+                        name: 'userfield',
+                        label: 'userfield',
+                        sorting: true
+                    }
+                ]
+            });
         console.log('Ready', bt);
         collection.fetch({reset: true});
     });

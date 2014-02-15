@@ -5,8 +5,27 @@ body {
 .b-test {
   color: red;
 }
+.b-backtable__arrow {
+  background: url("../imgs/table.list.arrow.png") -16px 0px;
+  opacity: 0.3;
+  float: right;
+  width: 16px;
+  height: 16px;
+}
+.b-backtable__arrow_direction_down {
+  background-position: 0px 0px;
+  opacity: 1;
+}
+.b-backtable__arrow_direction_mc {
+  background-position: -16px 0px;
+  opacity: 0.3;
+}
+.b-backtable__arrow_direction_up {
+  background-position: -32px 0px;
+  opacity: 1;
+}
 .b-backtable__col_size_min {
-  width: 33%;
+  width: 12%;
 }
 .b-backtable__col_size_checkbox {
   width: 50px;
@@ -24,6 +43,20 @@ body {
 }
 .b-backtable__td {
   padding: 5px 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.b-backtable__td_select_no {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .b-backtable__td:hover {
   background: #FFFFCC;
