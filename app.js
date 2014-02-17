@@ -63,11 +63,13 @@
             var self = this;
 
             // TODO: использовать компонент LCheckbox
-            this.$el.append($("<th class='b-backtable__td'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></th>"));
+            this.$el.append($("<th class='b-backtable__th'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></th>"));
 
             this.$els = {};
             _.each(this.columns, function (column, index) {
-                var element = $(headerRow(_.extend(column, {index: index})));
+                var element;
+                column['sorting'] = column.sorting || (_.isUndefined(column.sorting) && this.parent.options.sorting);
+                element = $(headerRow(_.extend(column, {index: index})));
                 this.$el.append(element);
                 if (column.sorting) {
                     // Запишим хеш колонки сортировки
@@ -239,8 +241,7 @@
                     },
                     {
                         name: 'calldate',
-                        label: 'calldate',
-                        sorting: true
+                        label: 'calldate'
                     },
                     {
                         name: 'src',
@@ -249,13 +250,11 @@
                     },
                     {
                         name: 'dst',
-                        label: 'dst',
-                        sorting: false
+                        label: 'dst'
                     },
                     {
                         name: 'duration',
-                        label: 'duration',
-                        sorting: false
+                        label: 'duration'
                     },
                     {
                         name: 'billsec',
