@@ -43,12 +43,6 @@
             $(this.el).empty().remove();
         }
     });
-    /*// TODO: Maybe ???
-    var HeaderRowModel = Backbone.Model.extend({
-    });
-    var HeaderCollection = Backbone.Model.extend({
-        model: Backbone.Model
-    });*/
     var BackTableHeader = Backbone.View.extend({
         tagName: 'tr',
         className: 'backtable__header-tr',
@@ -58,10 +52,10 @@
             direction: 0
         },
         initialize: function (options) {
-            console.log(options);
             this.columns = options.columns;
             this.parent = options.parent;
-            //this.collection = new HeaderCollection()
+            this.parent.collection.on('sync', _.bind(this.changeSorting, this));
+
             this.render();
             return this;
         },
@@ -87,26 +81,35 @@
             return this;
         },
         sorting: function (e) {
-            var field = $(e.target).data('sorting');
-            if (!field) {
+            var sortKey = $(e.target).data('sorting'),
+                order;
+            if (!sortKey) {
+                return false;
+            }
+            order = (!this.sort.current || this.sort.current.th.data('sorting') !== sortKey) ? -1 : -this.sort.direction;
+            this.parent.collection.setSorting(sortKey, order, {full: true}).fetch();
+
+            return true;
+        },
+        changeSorting: function () {
+            var sortKey = this.parent.collection.state['sortKey'];
+            if (!sortKey) {
                 return false;
             }
 
-            // Удаляем струлку у текущей сортировки
+            // Удаляем струлку у текущего столбца сортировки, если конечно есть
             if (this.sort.current) {
                 this.sort.current.span.delMod('direction');
             }
 
-            if (!this.sort.current || this.sort.current.th.data('sorting') !== field) {
-                this.sort.current = this.$els[field];
-                this.sort.direction = -1;
-            } else {
-                this.sort.direction = -this.sort.direction;
-            }
+            this.sort = {
+                direction: this.parent.collection.state['order'],
+                sortKey: sortKey,
+                current: (!this.sort.current || this.sort.current.th.data('sorting') !== sortKey) ? this.$els[sortKey] : this.sort.current
+            };
+
             this.sort.current.span.setMod('direction', this.sort.direction === 1 ? 'up' : 'down');
-            console.log(this.sort.current);
-            this.parent.collection.setSorting(field, this.sort.direction, {full: true});
-            this.parent.collection.fetch();
+            return true;
         }
     });
     var BackTable = Backbone.View.extend({
@@ -160,7 +163,7 @@
             this.$els['content'].append(this.list[model.cid].el);
         },
         _remove: function () {
-            console.log('remove');
+            console.log('remove', arguments);
         },
         _reset: function (models) {
             console.log('reset', models);

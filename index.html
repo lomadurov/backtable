@@ -47,7 +47,7 @@
     <script type="text/template" id="template-header-row">
         <% if (sorting){ %>
         <th class="b-backtable__td" data-sorting="<%= name%>">
-            <%= label || name%> <span class="b-backtable__arrow<%= (index === 0) ? ' b-backtable__arrow_direction_down' : '' %>"></span>
+            <%= label || name%> <span class="b-backtable__arrow"></span>
         </th>
         <% } else { %>
         <th class="b-backtable__td">
