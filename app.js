@@ -1,46 +1,71 @@
 /*global $, Backbone, _*/
-(function () {
+(function (root) {
     "use strict";
 
-    var template = _.template("<td class='b-backtable__td'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>"),
+    var template = _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>"),
         headerRow = _.template($('#template-header-row').html());
 
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
         className: 'b-backtable__tr',
-        initialize: function () {
+        initialize: function (options) {
+            this.parent = options.parent;
             // Подписываемся на изменение модели
-            this.model.bind('remove', this.remove, this);
-            this.model.bind('change', this.reRender, this);
-            this.model.bind('render', this.render, this);
-            this.model.bind('update', this.update, this);
-            this.model.bind('checkedItem', this.onChecked, this);
-            $(this.el).attr('tabindex', 0);
+            this.listenTo(this.model, 'remove', this.remove)
+                .listenTo(this.model, 'change', this.reRender)
+                .listenTo(this.model, 'render', this.render)
+                .listenTo(this.model, 'update', this.update)
+                .listenTo(this.model, 'checkedItem', this.onChecked);
+            this.$el.attr('tabindex', 0);
         },
         // Перерисовать элемнт [change, redraw]
         reRender: function () {
-            console.warn('changeITEM');
-            $(this.el).html(clients_tag.getTemplate('item', this.model));
+            // TODO: Сделать перерисовку модели
+        },
+        click: function () {
+            if (!event.ctrlKey && !$(event.target).is('span.checkbox-icon') && !$(event.target).is('td.first')) {
+                this.parent.collection.checkedToggle(false);
+            }
+            this.model.checked = !this.model.checked;
+            this.parent.collection.checkedSet(this.model.checked);
+            this.onChecked(true);
+        },
+        onChecked: function (focus) {
+            if (this.model.checked) {
+                this.$el.setMod('checked', 'yes');
+                this.$check.change('checked', !focus);
+            } else {
+                this.$el.delMod('checked', 'yes');
+                this.$check.change('unchecked', !focus);
+            }
         },
         show: function () {
-            $(this.el).show();
+            this.$el.show();
         },
         // Отрисовка элемента
         render: function (on) {
-            // TODO: Проверить: отсоединяются ли события после empty
-            $(this.el).empty();
-            /* NEW */
-            $(this.el).html(template(this.model.toJSON()));
-            //$(this.el).bind('mouseenter mouseleave focusin focusout', this.onHover);a
-            $(this.el).bind('click', $.proxy(this.click, this));
-            $(this.el).bind('keypress', $.proxy(this.keypress, this));
-            $(this.el).toggleClass('update', !!this.model.update);
-            //this.onChecked();
+            this.$el
+                .empty()
+                .html(template(this.model.toJSON()))
+                .bind({
+                    'click': $.proxy(this.click, this),
+                    'keypress': $.proxy(this.keypress, this)
+                })
+                // Class для обновления
+                .toggleClass('update', !!this.model.update);
+
+            this.$check = $('input[type="checkbox"]', this.$el).lcheck().data('checkbox');
             return this;
         },
         // Удалить элемент
         remove: function () {
-            $(this.el).empty().remove();
+            if (this.model.checked) {
+                this.model.checked = !this.model.checked;
+                this.parent.collection.checkedSet(this.model.checked);
+            }
+            this.$el.empty().remove();
+            this.stopListening();
+            delete this.parent;
         }
     });
     var BackTableHeader = Backbone.View.extend({
@@ -54,7 +79,10 @@
         initialize: function (options) {
             this.columns = options.columns;
             this.parent = options.parent;
-            this.parent.collection.on('sync', _.bind(this.changeSorting, this));
+            //this.parent.collection.on('sync', _.bind(this.changeSorting, this));
+
+            this.listenTo(this.parent.collection, 'checked' , this.changeSelected)
+                .listenTo(this.parent.collection, 'sync' , this.changeSorting);
 
             this.render();
             return this;
@@ -62,8 +90,14 @@
         render: function () {
             var self = this;
 
-            // TODO: использовать компонент LCheckbox
-            this.$el.append($("<th class='b-backtable__th'><div class='b-checkbox'><div class='b-checkbox__option'></div></div></th>"));
+            if (this.parent.options.checkbox) {
+                this.$el.append($("<th class='b-backtable__th'><input type='checkbox'></th>"));
+                this.$check = this.$('input[type="checkbox"]').lcheck();
+                this.$check.bind('lcheck', function (e, checked) {
+                    self.parent.collection.checkedToggle(checked === 'checked');
+                });
+                //console.log('>>', this.$check, this.$check.data('checkbox').change);
+            }
 
             this.$els = {};
             _.each(this.columns, function (column, index) {
@@ -102,6 +136,7 @@
             // Удаляем струлку у текущего столбца сортировки, если конечно есть
             if (this.sort.current) {
                 this.sort.current.span.delMod('direction');
+                this.sort.current.th.delMod('order');
             }
 
             this.sort = {
@@ -111,7 +146,19 @@
             };
 
             this.sort.current.span.setMod('direction', this.sort.direction === 1 ? 'up' : 'down');
+            this.sort.current.th.setMod('order');
             return true;
+        },
+        changeSelected: function (count) {
+            if (count > 0) {
+                if (count === this.parent.collection.length) {
+                    this.$check.data('checkbox').change('checked', true, true);
+                } else {
+                    this.$check.data('checkbox').change('indeterminate', true, true);
+                }
+            } else {
+                this.$check.data('checkbox').change('unchecked', true, true);
+            }
         }
     });
     var BackTable = Backbone.View.extend({
@@ -132,9 +179,10 @@
             this.list = [];
             console.log('initialize test', this.collection, arguments);
             //this.collection.bind()
-            this.listenTo(this.collection, 'add', this._add);
-            this.listenTo(this.collection, 'remove', this._remove);
-            this.listenTo(this.collection, 'reset', this._reset);
+            this.listenTo(this.collection, 'add', this._add)
+                .listenTo(this.collection, 'remove', this._remove)
+                .listenTo(this.collection, 'reset', this._reset)
+                .listenTo(this.collection, 'checked', this.disableControls);
 
             this.header = new BackTableHeader({columns: options.columns, checkbox: this.options.checkbox, parent: this});
 
@@ -155,20 +203,23 @@
             $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
             this.resizeWindow();
         },
+
         _add: function (model) {
             console.log('add', model);
             this.list[model.cid] = new BackTableRow({
+                parent: this,
                 model: model
             });
             this.list[model.cid].render();
             // Положим вьювер в таблицу
             this.$els['content'].append(this.list[model.cid].el);
         },
-        _remove: function () {
+         _remove: function () {
             console.log('remove', arguments);
+            return false;
         },
         _reset: function (models) {
-            console.log('reset', models);
+            console.log('** >> reset', models);
             models.each(function (model) {
                 this._add(model);
             }, this);
@@ -183,10 +234,6 @@
                 this.$els['header'].delMod('shadow');
                 this._shadowEnable = false;
             }
-            // Если мы приближаймся к концу списка то покажем ещё элементов
-            /*if (this.options.wraper.scrollTop() + 50 >= this.$el.height() - this.options.wraper.height()) {
-             this.showNew();
-             }*/
         },
         resizeWindow: function () {
             var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - 5,
@@ -200,80 +247,46 @@
         }
     });
 
-    var Model = Backbone.Model.extend({
-        idAttribute: 'acctid'
+    var BackTableModel = Backbone.Model.extend({
+        checked: false,
+        checkedSet: function (on, silent) {
+            if (on !== this.checked) {
+                this.checked = on;
+                if (!silent) { this.trigger('checkedItem'); }
+            }
+        }
     });
-    var Collection = Backbone.PageableCollection.extend({
-        url: '/api/sip_cdr/list',
-        model: Model,
-        mode: 'server',
-        state: {
-            firstPage: 0,
-            pageSize: 25
+    var BackTableCollection = Backbone.PageableCollection.extend({
+        /**
+         * Переключение всех моделей в режим выбрано/не выбрано
+         *
+         * @param bool
+         */
+        checkedToggle: function (bool) {
+            this.each(function (item) {
+                item.checkedSet(bool);
+            }, this);
+            this.checkedCount = (bool) ? this.length : 0;
+            this.trigger('checked', this.checkedCount);
         },
-        parse: function (response) {
-            // TODO: Добавить обработку неправильного ответа
-            this.state = this._checkState(_.extend({}, this.state, {
-                currentPage: response.state.page,
-                pageSize: response.state.per_page,
-                //totalPages: 25,
-                totalRecords: response.state.total_entries,
-                sortKey: response.state.sort_by,
-                order: response.state.order === 'asc' ? -1 : 1
-            }));
-            return response['sip_cdr'] || '';
+        /**
+         * Подсчёт выбранных элементов
+         *
+         * @param bool Boolean
+         * @param silent Boolean Тихий режим
+         */
+        checkedSet: function (bool, silent) {
+            console.log('> checked count', this.checkedCount, bool);
+            (bool) ? this.checkedCount++ : this.checkedCount--;
+            console.log('>> checked count', this.checkedCount, bool);
+            if (!silent) {
+                this.trigger('checked', this.checkedCount);
+            }
         }
     });
 
-    $(document).ready(function () {
-        var collection = new Collection(),
-            bt = new BackTable({
-                el: $('.b-backtable'),
-                collection: collection,
-                userSelect: true,
-                sorting: false,
-                checkbox: true,
-                columns: [
-                    {
-                        name: 'acctid',
-                        label: 'ID',
-                        sorting: true
-                    },
-                    {
-                        name: 'calldate',
-                        label: 'calldate'
-                    },
-                    {
-                        name: 'src',
-                        label: 'src',
-                        sorting: true
-                    },
-                    {
-                        name: 'dst',
-                        label: 'dst'
-                    },
-                    {
-                        name: 'duration',
-                        label: 'duration'
-                    },
-                    {
-                        name: 'billsec',
-                        label: 'billsec',
-                        sorting: true
-                    },
-                    {
-                        name: 'disposition',
-                        label: 'disposition',
-                        sorting: true
-                    },
-                    {
-                        name: 'userfield',
-                        label: 'userfield',
-                        sorting: true
-                    }
-                ]
-            });
-        console.log('Ready', bt);
-        collection.fetch({reset: true});
-    });
-})();
+
+    root.BackTable = BackTable;
+    root.BackTableCollection = BackTableCollection;
+    root.BackTableModel = BackTableModel;
+})(this);

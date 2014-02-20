@@ -6,6 +6,12 @@
 
 </head>
 <body>
+    <div class="b-controls">
+        <button class="b-button"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
+        <button class="b-button"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
+        <button class="b-button"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
+        <div class="b-paginator">123</div>
+    </div>
     <div class="b-backtable">
         <div class="b-backtable__header-wrapper">
             <table class="b-backtable__header">
@@ -43,11 +49,10 @@
             </table>
         </div>
     </div>
-
     <script type="text/template" id="template-header-row">
         <% if (sorting){ %>
         <th class="b-backtable__th<%= (sorting) ? ' b-backtable__th_sorting_yes" data-sorting="' + name + '"' : '"' %>>
-            <%= label || name%> <span class="b-backtable__arrow"></span>
+        <%= label || name%> <span class="b-backtable__arrow"></span>
         </th>
         <% } else { %>
         <th class="b-backtable__th">
@@ -55,14 +60,90 @@
         </th>
         <% } %>
     </script>
-
-
     <script src="./bower_components/jquery/jquery.min.js"></script>
     <script src="./bower_components/jquery-bem/jquery.bem.js"></script>
     <script src="./bower_components/underscore/underscore.js"></script>
     <script src="./bower_components/backbone/backbone.js"></script>
     <script src="./bower_components/backbone-pageable/lib/backbone-pageable.js"></script>
+    <script src="./bower_components/lcheck/lcheck.js"></script>
     <script src="./app.js"></script>
+    <script>
+        $(document).ready(function () {
+            var Model = BackTableModel.extend({
+                idAttribute: 'acctid'
+            });
+            var Collection = BackTableCollection.extend({
+                url: '/api/sip_cdr/list',
+                model: Model,
+                mode: 'server',
+                state: {
+                    firstPage: 0,
+                    pageSize: 25
+                },
+                parse: function (response) {
+                    // TODO: Добавить обработку неправильного ответа
+                    this.state = this._checkState(_.extend({}, this.state, {
+                        currentPage: response.state.page,
+                        pageSize: response.state.per_page,
+                        //totalPages: 25,
+                        totalRecords: response.state.total_entries,
+                        sortKey: response.state.sort_by,
+                        order: response.state.order === 'asc' ? -1 : 1
+                    }));
+                    return response['sip_cdr'] || '';
+                }
+            });
+            var collection = new Collection(),
+                    bt = new BackTable({
+                        el: $('.b-backtable'),
+                        collection: collection,
+                        userSelect: true,
+                        sorting: false,
+                        checkbox: true,
+                        columns: [
+                            {
+                                name: 'acctid',
+                                label: 'ID',
+                                sorting: true
+                            },
+                            {
+                                name: 'calldate',
+                                label: 'calldate'
+                            },
+                            {
+                                name: 'src',
+                                label: 'src',
+                                sorting: true
+                            },
+                            {
+                                name: 'dst',
+                                label: 'dst'
+                            },
+                            {
+                                name: 'duration',
+                                label: 'duration'
+                            },
+                            {
+                                name: 'billsec',
+                                label: 'billsec',
+                                sorting: true
+                            },
+                            {
+                                name: 'disposition',
+                                label: 'disposition',
+                                sorting: true
+                            },
+                            {
+                                name: 'userfield',
+                                label: 'userfield',
+                                sorting: true
+                            }
+                        ]
+                    });
+            console.log('Ready', bt);
+            collection.fetch({reset: true});
+        });
+    </script>
 </body>
 
 </html>
