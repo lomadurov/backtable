@@ -2,8 +2,7 @@
 (function (root) {
     "use strict";
 
-    var template = _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>"),
-        headerRow = _.template($('#template-header-row').html());
+    var template = _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>");
 
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
@@ -101,17 +100,20 @@
 
             this.$els = {};
             _.each(this.columns, function (column, index) {
-                var element;
+                var $element,
+                    $span;
                 column['sorting'] = column.sorting || (_.isUndefined(column.sorting) && this.parent.options.sorting);
-                element = $(headerRow(_.extend(column, {index: index})));
-                this.$el.append(element);
+                $element = $("<th class='b-backtable__th'></th>").text(column.label || column.name);
+                this.$el.append($element);
                 if (column.sorting) {
+                    $element.setMod('sorting').data('sorting', column.name);
+                    $span = $('<span class="b-backtable__arrow"></span>').appendTo($element);
                     // Запишим хеш колонки сортировки
                     this.$els[column.name] = {
-                        th: element,
-                        span: $('.b-backtable__arrow', element)
+                        th: $element,
+                        span: $span
                     };
-                    element.bind('click', _.bind(this.sorting, this));
+                    $element.bind('click', _.bind(this.sorting, this));
                 }
             }, this);
             return this;
