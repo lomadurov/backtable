@@ -1,6 +1,14 @@
+html {
+  font-family: 'Open Sans';
+  font-size: 14px;
+  font-weight: 400;
+  background: #fff !important;
+  overflow: auto !important;
+}
 body {
-  background-color: #fff !important;
-  margin: 20px 80px;
+  background: #fff;
+  font-family: 'Open Sans';
+  margin: 20px 80px 0px;
 }
 .b-test {
   color: red;
@@ -8,6 +16,9 @@ body {
 table tr td,
 table tr th {
   padding: 15px 5px;
+}
+.b-backtable {
+  position: relative;
 }
 .b-backtable__arrow {
   background: url("../imgs/table.list.arrow.png") -16px 0px;

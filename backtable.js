@@ -185,8 +185,11 @@
             checkbox: true,
             // TODO: issue #8
             userSelect: true,
-            // TODO: issue #9
-            sorting: false
+            sorting: false,
+            width: '100%',
+            heightMode: 'auto',
+            height: '300',
+            heightAdditional: 5
         },
         collection: undefined,
         /**
@@ -221,9 +224,14 @@
             console.log(this.header.$el);
             this.$els['header'].children('thead').append(this.header.$el);
 
-            this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
-            $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
-            this.resizeWindow();
+            if (this.options['heightMode'] === 'fixed') {
+                this.resize(this.options['width'], this.options['height']);
+            }
+            if (this.options['heightMode'] === 'full') {
+                this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
+                $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
+                this.resizeWindow();
+            }
         },
 
         _add: function (model) {
@@ -259,14 +267,18 @@
             }
         },
         resizeWindow: function () {
-            var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - 5,
+            var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - this.options['heightAdditional'],
                 width = this.$els['content-wrapper'].width() - 35;
+            this.resize(width, height);
+            console.log(width, height);
+            this.wrapperScroll();
+        },
+        resize: function (width, height) {
             this.$els['header'].css('width', width);
             this.$els['content']
                 .css('margin-top', this.$els['header'].height())
                 .css('width', width);
             this.$els['content-wrapper'].height(height);
-            this.wrapperScroll();
         }
     });
 

@@ -469,14 +469,6 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
 }
-body {
-    font-family: 'Open Sans';
-    height: 300px;
-    font-size: 14px;
-    font-weight: 400;
-    background: #191818;
-    overflow: hidden;
-}
 select,
 input {
     outline: 0px;
@@ -1890,14 +1882,6 @@ textarea {
 table {
     border-collapse: collapse;
     border-spacing: 0;
-}
-body {
-    font-family: 'Open Sans';
-    height: 300px;
-    font-size: 14px;
-    font-weight: 400;
-    background: #191818;
-    overflow: hidden;
 }
 select,
 input {
