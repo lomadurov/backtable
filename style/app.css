@@ -90,7 +90,6 @@ table tr th {
 }
 .b-backtable__header-wrapper {
   position: absolute;
-  margin-right: 17px;
 }
 .b-backtable__header_shadow_yes {
   box-shadow: 0 2px 9px -2px #cecece;

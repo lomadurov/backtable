@@ -186,10 +186,10 @@
             // TODO: issue #8
             userSelect: true,
             sorting: false,
-            width: '100%',
             heightMode: 'auto',
             height: '300',
-            heightAdditional: 5
+            heightAdditional: 5,
+            scrollbarAdditionalWidth: 5
         },
         collection: undefined,
         /**
@@ -213,7 +213,9 @@
 
             this.render();
         },
-
+        /**
+         *
+         */
         render: function () {
             this.$els = {
                 'header-wrapper': this.$el.elem('header-wrapper'),
@@ -221,11 +223,11 @@
                 'content-wrapper': this.$el.elem('content-wrapper'),
                 'content': this.$el.elem('content')
             };
-            console.log(this.header.$el);
+            this.options.scrollbarWidth = this._getScrollbarWidth() + this.options.scrollbarAdditionalWidth;
             this.$els['header'].children('thead').append(this.header.$el);
 
             if (this.options['heightMode'] === 'fixed') {
-                this.resize(this.options['width'], this.options['height']);
+                this.resize(this.options['width'] || this.$els['content-wrapper'].width() - this.options.scrollbarWidth, this.options['height']);
             }
             if (this.options['heightMode'] === 'full') {
                 this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
@@ -233,7 +235,12 @@
                 this.resizeWindow();
             }
         },
-
+        /**
+         * Добавление
+         *
+         * @param model
+         * @private
+         */
         _add: function (model) {
             console.log('add', model);
             this.list[model.cid] = new BackTableRow({
@@ -245,10 +252,20 @@
             // Положим вьювер в таблицу
             this.$els['content'].append(this.list[model.cid].el);
         },
+        /**
+         *
+         * @returns {boolean}
+         * @private
+         */
          _remove: function () {
             console.log('remove', arguments);
             return false;
         },
+        /**
+         *
+         * @param models
+         * @private
+         */
         _reset: function (models) {
             console.log('** >> reset', models);
             models.each(function (model) {
@@ -268,7 +285,7 @@
         },
         resizeWindow: function () {
             var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - this.options['heightAdditional'],
-                width = this.$els['content-wrapper'].width() - 35;
+                width = this.$els['content-wrapper'].width() - this.options.scrollbarWidth;
             this.resize(width, height);
             console.log(width, height);
             this.wrapperScroll();
@@ -279,6 +296,20 @@
                 .css('margin-top', this.$els['header'].height())
                 .css('width', width);
             this.$els['content-wrapper'].height(height);
+        },
+        /**
+         * Получить ширину скроллбара
+         *
+         * @returns Integer
+         * @private
+         */
+        _getScrollbarWidth: function () {
+            var $temporary = $(document.createElement('p')).css('width', '100%').css('height', '100%'),
+                width = this.$els['content-wrapper'].width();
+            this.$els['content-wrapper'].append($temporary);
+            width = width - this.$els['content-wrapper'].width();
+            $temporary.remove();
+            return width;
         }
     });
 
