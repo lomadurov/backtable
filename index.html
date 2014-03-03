@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="b-controls">
-        <button class="b-button b-button_type_shadow"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
+        <button class="b-button b-button_type_shadow" name="add"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
         <button class="b-button b-button_type_shadow"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
         <button class="b-button b-button_type_shadow b-button_color_red b-button_icon_yes fa-trash-o"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
         <div class="b-paginator">123</div>
@@ -61,59 +61,63 @@
                 }
             });
             var collection = new Collection(),
-                    table = new BackTable({
-                        //el: $('.b-backtable'),
-                        collection: collection,
-                        userSelect: true,
-                        sorting: false,
-                        checkbox: true,
-                        heightMode: 'fixed',
-                        height: 300,
-                        //heightAdditional: 5,
-                        cssClasses: {
+                table = new BackTable({
+                    //el: $('.b-backtable'),
+                    collection: collection,
+                    userSelect: true,
+                    sorting: false,
+                    checkbox: true,
+                    heightMode: 'fixed',
+                    height: 300,
+                    //heightAdditional: 5,
+                    cssClasses: {
 
+                    },
+                    columns: [
+                        {
+                            name: 'acctid',
+                            label: 'ID',
+                            sorting: true
                         },
-                        columns: [
-                            {
-                                name: 'acctid',
-                                label: 'ID',
-                                sorting: true
-                            },
-                            {
-                                name: 'calldate',
-                                label: 'calldate'
-                            },
-                            {
-                                name: 'src',
-                                label: 'src',
-                                sorting: true
-                            },
-                            {
-                                name: 'dst',
-                                label: 'dst'
-                            },
-                            {
-                                name: 'duration',
-                                label: 'duration'
-                            },
-                            {
-                                name: 'billsec',
-                                label: 'billsec',
-                                sorting: true
-                            },
-                            {
-                                name: 'disposition',
-                                label: 'disposition',
-                                sorting: true
-                            },
-                            {
-                                name: 'userfield',
-                                label: 'userfield',
-                                sorting: true
-                            }
-                        ]
-                    });
+                        {
+                            name: 'calldate',
+                            label: 'calldate'
+                        },
+                        {
+                            name: 'src',
+                            label: 'src',
+                            sorting: true
+                        },
+                        {
+                            name: 'dst',
+                            label: 'dst'
+                        },
+                        {
+                            name: 'duration',
+                            label: 'duration'
+                        },
+                        {
+                            name: 'billsec',
+                            label: 'billsec',
+                            sorting: true
+                        },
+                        {
+                            name: 'disposition',
+                            label: 'disposition',
+                            sorting: true
+                        },
+                        {
+                            name: 'userfield',
+                            label: 'userfield',
+                            sorting: true
+                        }
+                    ]
+                });
             console.log('Ready', table);
+
+            $('button[name="add"]').bind('click', function () {
+                console.log(collection.getChecked());
+            });
 
             //table.render().$el.appendTo($('.b-backtable__wrapper'));
             table.render().appendTo($('.b-backtable__wrapper'));

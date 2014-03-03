@@ -415,6 +415,14 @@
             if (!silent) {
                 this.trigger('checked', this.checkedCount);
             }
+        },
+        /**
+         * Получить все выюранные модели
+         */
+        getChecked: function () {
+            return this.filter(function (model) {
+                return model.checked;
+            });
         }
     });
 
