@@ -4,6 +4,7 @@ html {
   font-weight: 400;
   background: #fff !important;
   overflow: auto !important;
+  height: 100%;
 }
 body {
   background: #fff;
@@ -27,7 +28,7 @@ table tr th {
   width: 16px;
   height: 16px;
 }
-.b-backtable__arrow_direction_down {
+.b-backtable__arrow_direction_desc {
   background-position: 0px 0px;
   opacity: 1;
 }
@@ -35,7 +36,7 @@ table tr th {
   background-position: -16px 0px;
   opacity: 0.3;
 }
-.b-backtable__arrow_direction_up {
+.b-backtable__arrow_direction_asc {
   background-position: -32px 0px;
   opacity: 1;
 }

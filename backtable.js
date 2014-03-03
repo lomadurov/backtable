@@ -17,7 +17,7 @@
                 .listenTo(this.model, 'render', this.render)
                 .listenTo(this.model, 'update', this.update)
                 .listenTo(this.model, 'checkedItem', this.onChecked);
-            this.$el.attr('tabindex', 0);
+            return this;
         },
         // Перерисовать элемнт [change, redraw]
         reRender: function () {
@@ -33,10 +33,10 @@
         },
         onChecked: function (focus) {
             if (this.model.checked) {
-                this.$el.setMod('checked', 'yes');
+                this.$el.addClass(this.parent.getCss('checked'));
                 this.$check.change('checked', !focus);
             } else {
-                this.$el.delMod('checked', 'yes');
+                this.$el.removeClass(this.parent.getCss('checked'));
                 this.$check.change('unchecked', !focus);
             }
         },
@@ -44,9 +44,10 @@
             this.$el.show();
         },
         // Отрисовка элемента
-        render: function (on) {
+        render: function () {
             this.$el
                 .empty()
+                .attr('tabindex', 0)
                 .bind({
                     'click': $.proxy(this.click, this),
                     'keypress': $.proxy(this.keypress, this)
@@ -72,7 +73,6 @@
     });
     var BackTableHeader = Backbone.View.extend({
         tagName: 'tr',
-        className: 'backtable__header-tr',
         sort: {
             current: undefined,
             currentField: undefined,
@@ -81,7 +81,6 @@
         initialize: function (options) {
             this.columns = options.columns;
             this.parent = options.parent;
-            //this.parent.collection.on('sync', _.bind(this.changeSorting, this));
 
             this.listenTo(this.parent.collection, 'checked' , this.changeSelected)
                 .listenTo(this.parent.collection, 'sync' , this.changeSorting);
@@ -93,12 +92,13 @@
             var self = this;
 
             if (this.parent.options.checkbox) {
-                this.$el.append($("<th class='b-backtable__th'><input type='checkbox'></th>"));
-                this.$check = this.$('input[type="checkbox"]').lcheck();
-                this.$check.bind('lcheck', function (e, checked) {
-                    self.parent.collection.checkedToggle(checked === 'checked');
-                });
-                //console.log('>>', this.$check, this.$check.data('checkbox').change);
+                this.$check = $(document.createElement('input'))
+                    .attr('type', 'checkbox')
+                    .appendTo($(document.createElement('th')).addClass(this.parent.getCss('th')).appendTo(this.$el))
+                    .lcheck()
+                    .bind('lcheck', function (e, checked) {
+                        self.parent.collection.checkedToggle(checked === 'checked');
+                    });
             }
 
             this.$els = {};
@@ -106,11 +106,11 @@
                 var $element,
                     $span;
                 column['sorting'] = column.sorting || (_.isUndefined(column.sorting) && this.parent.options.sorting);
-                $element = $("<th class='b-backtable__th'></th>").text(column.label || column.name);
+                $element = $(document.createElement('th')).addClass(this.parent.getCss('th')).text(column.label || column.name);
                 this.$el.append($element);
                 if (column.sorting) {
                     $element.setMod('sorting').data('sorting', column.name);
-                    $span = $('<span class="b-backtable__arrow"></span>').appendTo($element);
+                    $span = $(document.createElement('span')).addClass(this.parent.getCss('arrow')).appendTo($element);
                     // Запишим хеш колонки сортировки
                     this.$els[column.name] = {
                         th: $element,
@@ -140,8 +140,9 @@
 
             // Удаляем струлку у текущего столбца сортировки, если конечно есть
             if (this.sort.current) {
-                this.sort.current.span.delMod('direction');
-                this.sort.current.th.delMod('order');
+                this.sort.current.span.removeClass(this.parent.getCss('directionAsc'));
+                this.sort.current.span.removeClass(this.parent.getCss('directionDesc'));
+                this.sort.current.th.removeClass(this.parent.getCss('order'));
             }
 
             this.sort = {
@@ -150,8 +151,8 @@
                 current: (!this.sort.current || this.sort.current.th.data('sorting') !== sortKey) ? this.$els[sortKey] : this.sort.current
             };
 
-            this.sort.current.span.setMod('direction', this.sort.direction === 1 ? 'up' : 'down');
-            this.sort.current.th.setMod('order');
+            this.sort.current.span.addClass(this.parent.getCss(this.sort.direction === -1 ? 'directionAsc' : 'directionDesc'));
+            this.sort.current.th.addClass(this.parent.getCss('order'));
             return true;
         },
         changeSelected: function (count) {
@@ -169,17 +170,32 @@
     var BackTable = Backbone.View.extend({
         options: {
             cssClasses: {
-                td: 'b-table__td',
-                th: 'b-table__th',
-                tr: 'b-table__tr',
-                header: 'b-table__header',
-                headerWrap: 'b-table__header-wrapper',
-                content: 'b-table__content',
-                contentWrap: 'b-table__content-wrapper',
-                shadow: 'b-table__header_shadow_yes',
+                tr: 'b-backtable__tr',
+                td: 'b-backtable__td',
+                th: 'b-backtable__th',
+                headerTr: 'b-backtable__header',
+
+                header: 'b-backtable__header',
+                headerWrap: 'b-backtable__header-wrapper',
+                content: 'b-backtable__content',
+                contentWrap: 'b-backtable__content-wrapper',
+
+                shadow: 'b-backtable__header_shadow_yes',
+
                 update: 'b-table__tr_state_update',
-                checked: 'b-table__tr_checked_yes',
-                hover: 'b-table__tr_hover_yes'
+                checked: 'b-backtable__tr_checked_yes',
+                hover: 'b-table__tr_hover_yes',
+
+                order: 'b-backtable__th_order_yes',
+                sorting: 'b-backtable__th_sorting_yes',
+
+                arrow: 'b-backtable__arrow',
+                directionAsc: 'b-backtable__arrow_direction_asc',
+                directionDesc: 'b-backtable__arrow_direction_desc',
+
+                colSize: 'b-backtable__col_size_',
+                colSizeDefault: 'b-backtable__col_size_min',
+                colSizeCheckbox: 'b-backtable__col_size_checkbox'
             },
             columns: [],
             checkbox: true,
@@ -191,42 +207,77 @@
             heightAdditional: 5,
             scrollbarAdditionalWidth: 5
         },
+        tagName: 'div',
+        className: 'b-backtable',
         collection: undefined,
         /**
          * @constructor
          */
         initialize: function (options) {
             if (options.cssClasses) {
-                this.options.cssClasses = _.extend({}, this.options.cssClasses, options.cssClasses);
+                this.options.cssClasses = _.extend({}, this.options.cssClasses, options['cssClasses']);
                 delete options.cssClasses;
             }
             this.options = _.extend({}, this.options, options);
+
             this.list = [];
-            console.log('initialize test', this.collection, arguments);
-            //this.collection.bind()
+
             this.listenTo(this.collection, 'add', this._add)
                 .listenTo(this.collection, 'remove', this._remove)
                 .listenTo(this.collection, 'reset', this._reset)
                 .listenTo(this.collection, 'checked', this.disableControls);
 
             this.header = new BackTableHeader({columns: options.columns, checkbox: this.options.checkbox, parent: this});
-
-            this.render();
+            return this;
+        },
+        getCss: function (name) {
+            return this.options.cssClasses[name]
         },
         /**
          *
          */
         render: function () {
+            if (this._rendered) {
+                return this;
+            }
             this.$els = {
-                'header-wrapper': this.$el.elem('header-wrapper'),
-                'header': this.$el.elem('header'),
-                'content-wrapper': this.$el.elem('content-wrapper'),
-                'content': this.$el.elem('content')
+                'header-wrapper': $(document.createElement('div')).addClass(this.getCss('headerWrap')).appendTo(this.$el),
+                'content-wrapper': $(document.createElement('div')).addClass(this.getCss('contentWrap')).appendTo(this.$el)
             };
-            this.options.scrollbarWidth = this._getScrollbarWidth() + this.options.scrollbarAdditionalWidth;
+            _.extend(this.$els, {
+                'colgroup': this._renderColGroup(),
+                'header': $(document.createElement('table')).addClass(this.getCss('header')).appendTo(this.$els['header-wrapper']),
+                'content': $(document.createElement('table')).addClass(this.getCss('content')).appendTo(this.$els['content-wrapper'])
+            });
+
+            // Вставляем стили колонок
+            this.$els.colgroup.clone().prependTo(this.$els.content);
+            this.$els.colgroup.clone().prependTo(this.$els.header);
+
+            // Добавляем загаловок
+            $(document.createElement('thead')).appendTo(this.$els['header']);
             this.$els['header'].children('thead').append(this.header.$el);
 
+            this._rendered = true;
+            return this;
+        },
+        appendTo: function ($to){
+            this.$el.appendTo($to);
+            this._calcTableSize();
+        },
+        append: function ($to){
+            $to.append(this.$el);
+            this._calcTableSize();
+        },
+        /**
+         * Подсчёт
+         * @private
+         */
+        _calcTableSize: function () {
+            // Высчитываем ширину колонки
+            this.options.scrollbarWidth = this._getScrollbarWidth() + this.options.scrollbarAdditionalWidth;
             if (this.options['heightMode'] === 'fixed') {
+                this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
                 this.resize(this.options['width'] || this.$els['content-wrapper'].width() - this.options.scrollbarWidth, this.options['height']);
             }
             if (this.options['heightMode'] === 'full') {
@@ -234,6 +285,24 @@
                 $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
                 this.resizeWindow();
             }
+        },
+        /**
+         * Создаём ColGroup исходя из колонок (+ добавляем колонку если используется выделение элементов)
+         * 1. Если есть style у колонки то добавляем стиль [colSize + style] ~ "b-backtable__col_size_" + "checkbox"
+         * 2. В ином случае используем размер по умолчанию
+         *
+         * @returns {*|jQuery|HTMLElement}
+         * @private
+         */
+        _renderColGroup: function () {
+            var $colgroup = $(document.createElement('colgroup')),
+                columns = this.options.checkbox ? [{style: 'checkbox'}].concat(this.options.columns) : this.options.columns;
+            _.each(columns, function (col) {
+                $(document.createElement('col'))
+                    .addClass(col.style ? this.getCss('colSize') + col.style : this.getCss('colSizeDefault'))
+                    .appendTo($colgroup);
+            }, this);
+            return $colgroup;
         },
         /**
          * Добавление
@@ -245,8 +314,7 @@
             console.log('add', model);
             this.list[model.cid] = new BackTableRow({
                 parent: this,
-                model: model,
-                cssClasses: this.options.cssClasses
+                model: model
             });
             this.list[model.cid].render();
             // Положим вьювер в таблицу
@@ -275,11 +343,11 @@
         wrapperScroll: function () {
             // Добавляем стиль к шапке если мы перемотали список вниз
             if (this.$els['content-wrapper'].scrollTop() > 0 && !this._shadowEnable) {
-                this.$els['header'].setMod('shadow');//.addClass('shadow');
+                this.$els['header'].addClass(this.getCss('shadow'));
                 this._shadowEnable = true;
             }
             if (this.$els['content-wrapper'].scrollTop() === 0 && this._shadowEnable) {
-                this.$els['header'].delMod('shadow');
+                this.$els['header'].removeClass(this.getCss('shadow'));
                 this._shadowEnable = false;
             }
         },
@@ -287,7 +355,6 @@
             var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - this.options['heightAdditional'],
                 width = this.$els['content-wrapper'].width() - this.options.scrollbarWidth;
             this.resize(width, height);
-            console.log(width, height);
             this.wrapperScroll();
         },
         resize: function (width, height) {
