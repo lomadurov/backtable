@@ -60,6 +60,11 @@
                     return response['sip_cdr'] || '';
                 }
             });
+            var Row = BackTableRow.extend({
+                options: {
+                    template: _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
+                }
+            });
             var collection = new Collection(),
                 table = new BackTable({
                     //el: $('.b-backtable'),
@@ -69,6 +74,7 @@
                     checkbox: true,
                     heightMode: 'fixed',
                     height: 300,
+                    row: Row,
                     //heightAdditional: 5,
                     cssClasses: {
 

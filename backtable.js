@@ -4,9 +4,8 @@
 
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
-        className: 'b-backtable__tr',
         options: {
-            template: _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
+            template: _.template('')
         },
         initialize: function (options) {
             this.parent = options.parent;
@@ -203,6 +202,7 @@
             userSelect: true,
             sorting: false,
             heightMode: 'auto',
+            row: BackTableRow,
             height: '300',
             heightAdditional: 5,
             scrollbarAdditionalWidth: 5
@@ -227,7 +227,7 @@
                 .listenTo(this.collection, 'reset', this._reset)
                 .listenTo(this.collection, 'checked', this.disableControls);
 
-            this.header = new BackTableHeader({columns: options.columns, checkbox: this.options.checkbox, parent: this});
+            this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options.columns, checkbox: this.options.checkbox, parent: this});
             return this;
         },
         getCss: function (name) {
@@ -312,7 +312,8 @@
          */
         _add: function (model) {
             console.log('add', model);
-            this.list[model.cid] = new BackTableRow({
+            this.list[model.cid] = new this.options.row({
+                className: this.getCss('tr'),
                 parent: this,
                 model: model
             });
@@ -428,6 +429,7 @@
 
 
     root.BackTable = BackTable;
+    root.BackTableRow = BackTableRow;
     root.BackTableCollection = BackTableCollection;
     root.BackTableModel = BackTableModel;
 })(this);
