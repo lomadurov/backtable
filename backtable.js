@@ -2,13 +2,15 @@
 (function (root) {
     "use strict";
 
-    var template = _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>");
-
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
         className: 'b-backtable__tr',
+        options: {
+            template: _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
+        },
         initialize: function (options) {
             this.parent = options.parent;
+            this.options = _.extend({}, options, this.options);
             // Подписываемся на изменение модели
             this.listenTo(this.model, 'remove', this.remove)
                 .listenTo(this.model, 'change', this.reRender)
@@ -45,14 +47,15 @@
         render: function (on) {
             this.$el
                 .empty()
-                .html(template(this.model.toJSON()))
                 .bind({
                     'click': $.proxy(this.click, this),
                     'keypress': $.proxy(this.keypress, this)
                 })
                 // Class для обновления
                 .toggleClass('update', !!this.model.update);
-
+            if (this.options['template'] && _.isFunction(this.options['template'])) {
+                this.$el.html(this.options['template'](this.model.toJSON()))
+            }
             this.$check = $('input[type="checkbox"]', this.$el).lcheck().data('checkbox');
             return this;
         },
@@ -165,6 +168,19 @@
     });
     var BackTable = Backbone.View.extend({
         options: {
+            cssClasses: {
+                td: 'b-table__td',
+                th: 'b-table__th',
+                tr: 'b-table__tr',
+                header: 'b-table__header',
+                headerWrap: 'b-table__header-wrapper',
+                content: 'b-table__content',
+                contentWrap: 'b-table__content-wrapper',
+                shadow: 'b-table__header_shadow_yes',
+                update: 'b-table__tr_state_update',
+                checked: 'b-table__tr_checked_yes',
+                hover: 'b-table__tr_hover_yes'
+            },
             columns: [],
             checkbox: true,
             // TODO: issue #8
@@ -177,7 +193,11 @@
          * @constructor
          */
         initialize: function (options) {
-            _.extend(this.options, options);
+            if (options.cssClasses) {
+                this.options.cssClasses = _.extend({}, this.options.cssClasses, options.cssClasses);
+                delete options.cssClasses;
+            }
+            this.options = _.extend({}, this.options, options);
             this.list = [];
             console.log('initialize test', this.collection, arguments);
             //this.collection.bind()
@@ -210,7 +230,8 @@
             console.log('add', model);
             this.list[model.cid] = new BackTableRow({
                 parent: this,
-                model: model
+                model: model,
+                cssClasses: this.options.cssClasses
             });
             this.list[model.cid].render();
             // Положим вьювер в таблицу

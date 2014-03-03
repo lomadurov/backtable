@@ -7,9 +7,9 @@
 </head>
 <body>
     <div class="b-controls">
-        <button class="b-button"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
-        <button class="b-button"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
-        <button class="b-button"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
+        <button class="b-button b-button_type_shadow"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
+        <button class="b-button b-button_type_shadow"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
+        <button class="b-button b-button_type_shadow b-button_color_red b-button_icon_yes fa-trash-o"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
         <div class="b-paginator">123</div>
     </div>
     <div class="b-backtable">
@@ -100,6 +100,9 @@
                         userSelect: true,
                         sorting: false,
                         checkbox: true,
+                        cssClasses: {
+
+                        },
                         columns: [
                             {
                                 name: 'acctid',
