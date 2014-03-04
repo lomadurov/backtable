@@ -2,11 +2,19 @@
 (function (root) {
     "use strict";
 
+    /**
+     * Класс для работы со строкой таблицы
+     */
     var BackTableRow = Backbone.View.extend({
         tagName: 'tr',
-        options: {
-            template: _.template('')
-        },
+        model: undefined,
+        /**
+         * Конструктор
+         *
+         * @param options
+         * @constructor
+         * @returns {BackTableRow}
+         */
         initialize: function (options) {
             this.parent = options.parent;
             this.options = _.extend({}, options, this.options);
@@ -18,25 +26,49 @@
                 .listenTo(this.model, 'checkedItem', this.onChecked);
             return this;
         },
-        // Перерисовать элемнт [change, redraw]
+        /**
+         * Перерисовка строки
+         * TODO: Сделать перерисовку модели
+         * @returns {BackTableRow}
+         */
         reRender: function () {
-            // TODO: Сделать перерисовку модели
+            return this;
         },
-        click: function (event, checked) {
+        /**
+         * Изменение статуса строки
+         * TODO: Изменение статуса строки
+         * @returns {BackTableRow}
+         */
+        update: function () {
+            return this;
+        },
+        /**
+         * Нажатие на элемент
+         *
+         * @param {jQuery.Event} event Событие
+         * @param {*} atCheckbox Любое значение != false считается нажатием на первый элемент
+         * @returns {boolean}
+         */
+        click: function (event, atCheckbox) {
             // Выходим если нету чекбоксов
             if (!this.parent || !this.parent.options || !this.parent.options.checkbox) {
                 return false;
             }
             // Множественный выбор работает если: зажата клавиша Ctrl, либо действие спровоцировано нажатием на чекбокс
-            if (event && !event.ctrlKey && !checked) {
+            if (event && !event.ctrlKey && !atCheckbox) {
                 this.parent.collection.checkedToggle(false, true);
             }
             this.model.checked = !this.model.checked;
             this.parent.collection.checkedSet(this.model.checked);
-            this.onChecked(true, !!checked);
+            this.onChecked(true);
             return false;
         },
-        onChecked: function (focus, silent) {
+        /**
+         * Отрисовка изменения выделения строки
+         *
+         * @param {boolean} focus
+         */
+        onChecked: function (focus) {
             if (this.model.checked) {
                 this.$el.addClass(this.parent.getCss('checked'));
                 this.$check.change('checked', !focus, true);
@@ -45,10 +77,11 @@
                 this.$check.change('unchecked', !focus, true);
             }
         },
-        show: function () {
-            this.$el.show();
-        },
-        // Отрисовка элемента
+        /**
+         * Отрисовка строки
+         *
+         * @returns {BackTableRow}
+         */
         render: function () {
             var _hashToCheckbox;
             this.$el
@@ -77,8 +110,13 @@
             }
             return this;
         },
-        // Удалить элемент
+        /**
+         * Удалить строку из таблицы
+         */
         remove: function () {
+            if (this.$check) {
+                this.$check.$span.remove();
+            }
             if (this.model.checked) {
                 this.model.checked = !this.model.checked;
                 this.parent.collection.checkedSet(this.model.checked);
@@ -88,6 +126,10 @@
             delete this.parent;
         }
     });
+
+    /**
+     * Класс для обработки загаловка таблицы
+     */
     var BackTableHeader = Backbone.View.extend({
         tagName: 'tr',
         sort: {
@@ -95,9 +137,16 @@
             currentField: undefined,
             direction: 0
         },
+        /**
+         * Конструктор
+         *
+         * @param {Array} options
+         * @constructor
+         * @returns {BackTableHeader}
+         */
         initialize: function (options) {
-            this.columns = options.columns;
-            this.parent = options.parent;
+            this.columns = options['columns'];
+            this.parent = options['parent'];
 
             this.listenTo(this.parent.collection, 'checked' , this.changeSelected)
                 .listenTo(this.parent.collection, 'sync' , this.changeSorting);
@@ -105,6 +154,11 @@
             this.render();
             return this;
         },
+        /**
+         * Отрисовка колонок загаловка
+         *
+         * @returns {BackTableHeader}
+         */
         render: function () {
             var self = this;
 
@@ -114,12 +168,12 @@
                     .appendTo($(document.createElement('th')).addClass(this.parent.getCss('th')).appendTo(this.$el))
                     .lcheck()
                     .bind('lcheck', function (e, checked) {
-                        self.parent.collection.checkedToggle(checked === 'checked');
+                        self.parent.collection.checkedToggle(checked === 'checked', false);
                     });
             }
 
             this.$els = {};
-            _.each(this.columns, function (column, index) {
+            _.each(this.columns, function (column) {
                 var $element,
                     $span;
                 column['sorting'] = column.sorting || (_.isUndefined(column.sorting) && this.parent.options.sorting);
@@ -138,8 +192,14 @@
             }, this);
             return this;
         },
-        sorting: function (e) {
-            var sortKey = $(e.target).data('sorting'),
+        /**
+         * Меняем направление сортировки и сообщаем коллеции о новом направлении
+         *
+         * @param {jQuery.Event} event События
+         * @returns {boolean}
+         */
+        sorting: function (event) {
+            var sortKey = $(event.target).data('sorting'),
                 order;
             if (!sortKey) {
                 return false;
@@ -149,6 +209,12 @@
 
             return true;
         },
+        /**
+         * После подгрузки новых данных в коллекции отрисовываем изменяя в направление сортировки
+         *
+         * @event sync
+         * @returns {boolean}
+         */
         changeSorting: function () {
             var sortKey = this.parent.collection.state['sortKey'];
             if (!sortKey) {
@@ -172,6 +238,11 @@
             this.sort.current.th.addClass(this.parent.getCss('order'));
             return true;
         },
+        /**
+         *
+         * @event BackTableCollection.checked
+         * @param {number} count Количество выделенных элементов
+         */
         changeSelected: function (count) {
             if (count > 0) {
                 if (count === this.parent.collection.length) {
@@ -184,6 +255,9 @@
             }
         }
     });
+    /**
+     * Класс отрисовки таблицы
+     */
     var BackTable = Backbone.View.extend({
         options: {
             cssClasses: {
@@ -231,7 +305,11 @@
         className: 'b-backtable',
         collection: undefined,
         /**
+         * Конструктор
+         *
          * @constructor
+         * @param {array} options Опции
+         * @returns {BackTable}
          */
         initialize: function (options) {
             if (options.cssClasses) {
@@ -244,17 +322,24 @@
 
             this.listenTo(this.collection, 'add', this._add)
                 .listenTo(this.collection, 'remove', this._remove)
-                .listenTo(this.collection, 'reset', this._reset)
-                .listenTo(this.collection, 'checked', this.disableControls);
+                .listenTo(this.collection, 'reset', this._reset);
 
             this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options.columns, checkbox: this.options.checkbox, parent: this});
             return this;
         },
+        /**
+         * Получить класс стилей по имени
+         *
+         * @param {string} name Имя класса
+         * @returns {string}
+         */
         getCss: function (name) {
-            return this.options.cssClasses[name]
+            return this.options.cssClasses[name] || ''
         },
         /**
+         * Отрисовка элемента
          *
+         * @returns {BackTable}
          */
         render: function () {
             if (this._rendered) {
@@ -281,17 +366,33 @@
             this._rendered = true;
             return this;
         },
+        /**
+         * Поместить данный элемнт в контейнер последним
+         *
+         * @param {jQuery} $to куда
+         * @returns {BackTable}
+         */
         appendTo: function ($to){
             this.$el.appendTo($to);
             this._calcTableSize();
-        },
-        append: function ($to){
-            $to.append(this.$el);
-            this._calcTableSize();
+            return this;
         },
         /**
-         * Подсчёт
+         * Поместить данный элемнт в контейнер первым
+         *
+         * @param {jQuery} $to куда
+         * @returns {BackTable}
+         */
+        prependTo: function ($to) {
+            this.$el.prependTo($to);
+            this._calcTableSize();
+            return this;
+        },
+        /**
+         * Подсчёт размера таблицы
+         *
          * @private
+         * @returns {BackTable}
          */
         _calcTableSize: function () {
             // Высчитываем ширину колонки
@@ -305,14 +406,15 @@
                 $(window).bind('resize', _.debounce(_.bind(this.resizeWindow, this), 40));
                 this.resizeWindow();
             }
+            return this;
         },
         /**
          * Создаём ColGroup исходя из колонок (+ добавляем колонку если используется выделение элементов)
          * 1. Если есть style у колонки то добавляем стиль [colSize + style] ~ "b-backtable__col_size_" + "checkbox"
          * 2. В ином случае используем размер по умолчанию
          *
-         * @returns {*|jQuery|HTMLElement}
          * @private
+         * @returns {*|jQuery|HTMLElement}
          */
         _renderColGroup: function () {
             var $colgroup = $(document.createElement('colgroup')),
@@ -325,42 +427,41 @@
             return $colgroup;
         },
         /**
-         * Добавление
+         * Добавление строки
          *
          * @param model
          * @private
+         * @returns {BackTable}
          */
         _add: function (model) {
-            console.log('add', model);
-            this.list[model.cid] = new this.options.row({
+            var newView;
+            newView = new this.options.row({
                 className: this.getCss('tr'),
                 parent: this,
                 model: model
             });
-            this.list[model.cid].render();
             // Положим вьювер в таблицу
-            this.$els['content'].append(this.list[model.cid].el);
+            this.$els['content'].append(newView.render().el);
+            return this;
         },
         /**
+         * Добавление строк
          *
-         * @returns {boolean}
          * @private
-         */
-         _remove: function () {
-            console.log('remove', arguments);
-            return false;
-        },
-        /**
-         *
-         * @param models
-         * @private
+         * @param {BackTableCollection} models Список новых строк
+         * @returns {BackTable}
          */
         _reset: function (models) {
-            console.log('** >> reset', models);
             models.each(function (model) {
                 this._add(model);
             }, this);
+            return this;
         },
+        /**
+         * Действия после прокрутки контейнера
+         *
+         * @returns {BackTable}
+         */
         wrapperScroll: function () {
             // Добавляем стиль к шапке если мы перемотали список вниз
             if (this.$els['content-wrapper'].scrollTop() > 0 && !this._shadowEnable) {
@@ -371,25 +472,40 @@
                 this.$els['header'].removeClass(this.getCss('shadow'));
                 this._shadowEnable = false;
             }
+            return this;
         },
+        /**
+         * Действия при изменении размера окна
+         *
+         * @returns {BackTable}
+         */
         resizeWindow: function () {
             var height = $(window).height() - this.$els['content-wrapper'].offset().top - this.$els['content-wrapper'].css("padding-top").replace("px", "") - this.options['heightAdditional'],
                 width = this.$els['content-wrapper'].width() - this.options.scrollbarWidth;
-            this.resize(width, height);
-            this.wrapperScroll();
+            this.resize(width, height)
+                .wrapperScroll();
+            return this;
         },
+        /**
+         * Изменить размеры загаловка и основной таблицы
+         *
+         * @param {number} width Ширина
+         * @param {number} height Высота
+         * @returns {BackTable}
+         */
         resize: function (width, height) {
             this.$els['header'].css('width', width);
             this.$els['content']
                 .css('margin-top', this.$els['header'].height())
                 .css('width', width);
             this.$els['content-wrapper'].height(height);
+            return this;
         },
         /**
          * Получить ширину скроллбара
          *
-         * @returns Integer
          * @private
+         * @returns {number}
          */
         _getScrollbarWidth: function () {
             var $temporary = $(document.createElement('p')).css('width', '100%').css('height', '100%'),
@@ -406,8 +522,8 @@
         /**
          * Перевести режим выборки модели
          *
-         * @param bool Boolean [True выброано, False нет]
-         * @param silent Boolean Промолчать об изменении выборки?
+         * @param {boolean} bool [True выброано, False нет]
+         * @param {boolean} silent Промолчать об изменении выборки?
          */
         checkedSet: function (bool, silent) {
             if (bool !== this.checked) {
@@ -423,8 +539,8 @@
         /**
          * Переключение всех моделей в режим выбрано/не выбрано
          *
-         * @param bool Boolean [True выброано, False нет]
-         * @param silent Boolean Промолчать об изменении выборки?
+         * @param {boolean} bool [True выброано, False нет]
+         * @param {boolean} silent Промолчать об изменении выборки?
          */
         checkedToggle: function (bool, silent) {
             this.each(function (item) {
@@ -438,8 +554,8 @@
         /**
          * Подсчёт выбранных элементов
          *
-         * @param bool Boolean [True выброано, False нет]
-         * @param silent Boolean Промолчать об изменении?
+         * @param {boolean} bool  [True выброано, False нет]
+         * @param {boolean} silent Промолчать об изменении?
          */
         checkedSet: function (bool, silent) {
             (bool) ? this.checkedCount++ : this.checkedCount--;
@@ -449,6 +565,8 @@
         },
         /**
          * Получить все выюранные модели
+         *
+         * @returns {BackTableModel[]}
          */
         getChecked: function () {
             return this.filter(function (model) {

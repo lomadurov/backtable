@@ -22,23 +22,32 @@ table tr th {
   position: relative;
 }
 .b-backtable__arrow {
-  background: url("../imgs/table.list.arrow.png") -16px 0px;
-  opacity: 0.3;
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
   float: right;
   width: 16px;
   height: 16px;
-}
-.b-backtable__arrow_direction_desc {
-  background-position: 0px 0px;
-  opacity: 1;
-}
-.b-backtable__arrow_direction_mc {
-  background-position: -16px 0px;
   opacity: 0.3;
 }
-.b-backtable__arrow_direction_asc {
-  background-position: -32px 0px;
+.b-backtable__arrow:before {
+  content: "\f0dc";
+}
+.b-backtable__arrow_direction_desc {
   opacity: 1;
+}
+.b-backtable__arrow_direction_desc:before {
+  content: "\f0dd";
+}
+.b-backtable__arrow_direction_asc {
+  opacity: 1;
+}
+.b-backtable__arrow_direction_asc:before {
+  content: "\f0de";
 }
 .b-backtable__col_size_min {
   width: 12%;
