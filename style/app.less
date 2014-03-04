@@ -32,22 +32,33 @@ table {
 .b-backtable {
     position: relative;
     &__arrow {
-        background: url("../imgs/table.list.arrow.png") -16px 0px;
-        opacity: 0.3;
+        font-family: FontAwesome;
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        font-size: 14px;
         float: right;
         width: 16px;
         height: 16px;
-        &_direction_desc {
-            background-position: 0px 0px;
-            opacity: 1;
+        opacity: 0.3;
+
+        &:before {
+            content: "\f0dc";
         }
-        &_direction_mc {
-            background-position: -16px 0px;
-            opacity: 0.3;
+        &_direction_desc {
+            opacity: 1;
+            &:before {
+                content: "\f0dd";
+            }
         }
         &_direction_asc {
-            background-position: -32px 0px;
             opacity: 1;
+            &:before {
+                content: "\f0de";
+            }
         }
     }
     // ------------------------------------
