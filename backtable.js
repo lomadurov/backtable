@@ -22,21 +22,27 @@
         reRender: function () {
             // TODO: Сделать перерисовку модели
         },
-        click: function () {
-            if (!event.ctrlKey && !$(event.target).is('span.checkbox-icon') && !$(event.target).is('td.first')) {
-                this.parent.collection.checkedToggle(false);
+        click: function (event, checked) {
+            // Выходим если нету чекбоксов
+            if (!this.parent || !this.parent.options || !this.parent.options.checkbox) {
+                return false;
+            }
+            // Множественный выбор работает если: зажата клавиша Ctrl, либо действие спровоцировано нажатием на чекбокс
+            if (event && !event.ctrlKey && !checked) {
+                this.parent.collection.checkedToggle(false, true);
             }
             this.model.checked = !this.model.checked;
             this.parent.collection.checkedSet(this.model.checked);
-            this.onChecked(true);
+            this.onChecked(true, !!checked);
+            return false;
         },
-        onChecked: function (focus) {
+        onChecked: function (focus, silent) {
             if (this.model.checked) {
                 this.$el.addClass(this.parent.getCss('checked'));
-                this.$check.change('checked', !focus);
+                this.$check.change('checked', !focus, true);
             } else {
                 this.$el.removeClass(this.parent.getCss('checked'));
-                this.$check.change('unchecked', !focus);
+                this.$check.change('unchecked', !focus, true);
             }
         },
         show: function () {
@@ -44,19 +50,31 @@
         },
         // Отрисовка элемента
         render: function () {
+            var _hashToCheckbox;
             this.$el
                 .empty()
                 .attr('tabindex', 0)
                 .bind({
-                    'click': $.proxy(this.click, this),
-                    'keypress': $.proxy(this.keypress, this)
+                    'click': _.bind(this.click, this)
                 })
                 // Class для обновления
                 .toggleClass('update', !!this.model.update);
             if (this.options['template'] && _.isFunction(this.options['template'])) {
                 this.$el.html(this.options['template'](this.model.toJSON()))
             }
-            this.$check = $('input[type="checkbox"]', this.$el).lcheck().data('checkbox');
+            // Отрисовываем чекбокс, если нужно
+            if (this.parent.options.checkbox) {
+                _hashToCheckbox = $(document.createElement('td'))
+                    .addClass(this.parent.getCss('td') + ' ' + this.parent.getCss('checkbox'))
+                    .bind('click', _.bind(this.click, this, 'checked'))
+                    .prependTo(this.$el);
+                this.$check = $(document.createElement('input'))
+                    .attr('type', 'checkbox')
+                    .lcheck()
+                    .data('checkbox');
+                this.$check.$span.appendTo(_hashToCheckbox);
+                this.$check.$input.bind('lcheck', _.bind(this.click, this));
+            }
             return this;
         },
         // Удалить элемент
@@ -188,6 +206,8 @@
                 order: 'b-backtable__th_order_yes',
                 sorting: 'b-backtable__th_sorting_yes',
 
+                checkbox: 'b-backtable__td_type_checkbox',
+
                 arrow: 'b-backtable__arrow',
                 directionAsc: 'b-backtable__arrow_direction_asc',
                 directionDesc: 'b-backtable__arrow_direction_desc',
@@ -277,12 +297,12 @@
             // Высчитываем ширину колонки
             this.options.scrollbarWidth = this._getScrollbarWidth() + this.options.scrollbarAdditionalWidth;
             if (this.options['heightMode'] === 'fixed') {
-                this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
+                this.$els['content-wrapper'].bind('scroll', _.debounce(_.bind(this.wrapperScroll, this), 40));
                 this.resize(this.options['width'] || this.$els['content-wrapper'].width() - this.options.scrollbarWidth, this.options['height']);
             }
             if (this.options['heightMode'] === 'full') {
-                this.$els['content-wrapper'].bind('scroll', _.debounce($.proxy(this.wrapperScroll, this), 40));
-                $(window).bind('resize', _.debounce($.proxy(this.resizeWindow, this), 40));
+                this.$els['content-wrapper'].bind('scroll', _.debounce(_.bind(this.wrapperScroll, this), 40));
+                $(window).bind('resize', _.debounce(_.bind(this.resizeWindow, this), 40));
                 this.resizeWindow();
             }
         },
@@ -383,36 +403,46 @@
 
     var BackTableModel = Backbone.Model.extend({
         checked: false,
-        checkedSet: function (on, silent) {
-            if (on !== this.checked) {
-                this.checked = on;
-                if (!silent) { this.trigger('checkedItem'); }
+        /**
+         * Перевести режим выборки модели
+         *
+         * @param bool Boolean [True выброано, False нет]
+         * @param silent Boolean Промолчать об изменении выборки?
+         */
+        checkedSet: function (bool, silent) {
+            if (bool !== this.checked) {
+                this.checked = bool;
+                if (!silent) {
+                    this.trigger('checkedItem');
+                }
             }
         }
     });
     var BackTableCollection = Backbone.PageableCollection.extend({
+        checkedCount: 0,
         /**
          * Переключение всех моделей в режим выбрано/не выбрано
          *
-         * @param bool
+         * @param bool Boolean [True выброано, False нет]
+         * @param silent Boolean Промолчать об изменении выборки?
          */
-        checkedToggle: function (bool) {
+        checkedToggle: function (bool, silent) {
             this.each(function (item) {
                 item.checkedSet(bool);
             }, this);
             this.checkedCount = (bool) ? this.length : 0;
-            this.trigger('checked', this.checkedCount);
+            if (!silent) {
+                this.trigger('checked', this.checkedCount);
+            }
         },
         /**
          * Подсчёт выбранных элементов
          *
-         * @param bool Boolean
-         * @param silent Boolean Тихий режим
+         * @param bool Boolean [True выброано, False нет]
+         * @param silent Boolean Промолчать об изменении?
          */
         checkedSet: function (bool, silent) {
-            console.log('> checked count', this.checkedCount, bool);
             (bool) ? this.checkedCount++ : this.checkedCount--;
-            console.log('>> checked count', this.checkedCount, bool);
             if (!silent) {
                 this.trigger('checked', this.checkedCount);
             }

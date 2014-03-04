@@ -62,7 +62,7 @@
             });
             var Row = BackTableRow.extend({
                 options: {
-                    template: _.template("<td class='b-backtable__td'><input type='checkbox'></td><td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
+                    template: _.template("<td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
                 }
             });
             var collection = new Collection(),
@@ -72,7 +72,7 @@
                     userSelect: true,
                     sorting: false,
                     checkbox: true,
-                    heightMode: 'fixed',
+                    heightMode: 'full',
                     height: 300,
                     row: Row,
                     //heightAdditional: 5,
@@ -120,6 +120,10 @@
                     ]
                 });
             console.log('Ready', table);
+
+            collection.on('checked', function (count) {
+                console.log('external function get checked count', count);
+            });
 
             $('button[name="add"]').bind('click', function () {
                 console.log(collection.getChecked());
