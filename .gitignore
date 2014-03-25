@@ -1,4 +1,5 @@
 .idea
+docs
 node_modules
 vendors
 bower_components

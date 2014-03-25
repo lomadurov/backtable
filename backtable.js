@@ -180,7 +180,7 @@
                 $element = $(document.createElement('th')).addClass(this.parent.getCss('th')).text(column.label || column.name);
                 this.$el.append($element);
                 if (column.sorting) {
-                    $element.setMod('sorting').data('sorting', column.name);
+                    $element.addClass(this.parent.getCss('sorting')).data('sorting', column.name);
                     $span = $(document.createElement('span')).addClass(this.parent.getCss('arrow')).appendTo($element);
                     // Запишим хеш колонки сортировки
                     this.$els[column.name] = {
@@ -212,7 +212,6 @@
         /**
          * После подгрузки новых данных в коллекции отрисовываем изменяя в направление сортировки
          *
-         * @event sync
          * @returns {boolean}
          */
         changeSorting: function () {
@@ -239,8 +238,8 @@
             return true;
         },
         /**
+         * Изменить флажок выделения взавиисимости от количества выбранных элементов
          *
-         * @event BackTableCollection.checked
          * @param {number} count Количество выделенных элементов
          */
         changeSelected: function (count) {
@@ -264,7 +263,7 @@
                 tr: 'b-backtable__tr',
                 td: 'b-backtable__td',
                 th: 'b-backtable__th',
-                headerTr: 'b-backtable__header',
+                headerTr: 'b-backtable__tr',
 
                 header: 'b-backtable__header',
                 headerWrap: 'b-backtable__header-wrapper',
@@ -442,6 +441,7 @@
             });
             // Положим вьювер в таблицу
             this.$els['content'].append(newView.render().el);
+            model.view = newView;
             return this;
         },
         /**
@@ -451,7 +451,11 @@
          * @param {BackTableCollection} models Список новых строк
          * @returns {BackTable}
          */
-        _reset: function (models) {
+        _reset: function (models, options) {
+            console.log(options);
+            _.each(options.previousModels, function (model) {
+                model.view.remove();
+            }, this);
             models.each(function (model) {
                 this._add(model);
             }, this);
@@ -517,6 +521,9 @@
         }
     });
 
+    /**
+     * @constructor
+     */
     var BackTableModel = Backbone.Model.extend({
         checked: false,
         /**
@@ -524,6 +531,7 @@
          *
          * @param {boolean} bool [True выброано, False нет]
          * @param {boolean} silent Промолчать об изменении выборки?
+         * @fires checkedItem
          */
         checkedSet: function (bool, silent) {
             if (bool !== this.checked) {
@@ -534,6 +542,9 @@
             }
         }
     });
+    /**
+     * @constructor
+     */
     var BackTableCollection = Backbone.PageableCollection.extend({
         checkedCount: 0,
         /**
@@ -541,6 +552,7 @@
          *
          * @param {boolean} bool [True выброано, False нет]
          * @param {boolean} silent Промолчать об изменении выборки?
+         * @fires checked
          */
         checkedToggle: function (bool, silent) {
             this.each(function (item) {
@@ -556,6 +568,7 @@
          *
          * @param {boolean} bool  [True выброано, False нет]
          * @param {boolean} silent Промолчать об изменении?
+         * @fires checked
          */
         checkedSet: function (bool, silent) {
             (bool) ? this.checkedCount++ : this.checkedCount--;

@@ -8,10 +8,11 @@
 </head>
 <body>
     <div class="b-controls">
-        <button class="b-button b-button_type_shadow" name="add"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
-        <button class="b-button b-button_type_shadow"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
-        <button class="b-button b-button_type_shadow b-button_color_red b-button_icon_yes fa-trash-o"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
-        <div class="b-paginator">123</div>
+        <div>
+            <button class="b-button b-button_type_shadow b-button_state_success" name="add"><span class="icon ico_add"></span><span class="label" title="">Добавить</span></button>
+            <button class="b-button b-button_type_shadow b-button_state_warning"><span class="icon ico_pencil"></span><span class="label">Редактирвать</span></button>
+            <button class="b-button b-button_type_shadow b-button_state_danger b-button_icon_yes fa-trash-o"><span class="icon ico_trash"></span><span class="label">Удалить</span></button>
+        </div>
     </div>
 
     <div class="b-backtable__wrapper"></div>
@@ -35,6 +36,7 @@
     <script src="./bower_components/backbone-pageable/lib/backbone-pageable.js"></script>
     <script src="./bower_components/lcheck/lcheck.js"></script>
     <script src="./backtable.js"></script>
+    <script src="./backtable-paginator.js"></script>
     <script>
         $(document).ready(function () {
             var Model = BackTableModel.extend({
@@ -46,7 +48,7 @@
                 mode: 'server',
                 state: {
                     firstPage: 0,
-                    pageSize: 25
+                    pageSize: 50
                 },
                 parse: function (response) {
                     // TODO: Добавить обработку неправильного ответа
@@ -121,7 +123,9 @@
                     ]
                 });
             console.log('Ready', table);
-
+            collection.on('all', function () {
+                console.log(arguments);
+            });
             collection.on('checked', function (count) {
                 console.log('external function get checked count', count);
             });
@@ -133,6 +137,13 @@
             //table.render().$el.appendTo($('.b-backtable__wrapper'));
             table.render().appendTo($('.b-backtable__wrapper'));
             collection.fetch({reset: true});
+
+
+            var paginator = new BacktablePaginator({
+                className: 'b-pagination',
+                collection: collection
+            });
+            $('.b-controls').append(paginator.render().$el);
         });
     </script>
 </body>
