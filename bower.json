@@ -1,7 +1,7 @@
 {
     "name": "backtable",
-    "version": "0.1.0",
-    "dependencies": {
+    "version": "0.1.1",
+    "devDependencies": {
         "jquery": "~1.11.0",
         "underscore": "~1.5.2",
         "backbone": "~1.1.0",
