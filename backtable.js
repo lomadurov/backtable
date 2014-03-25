@@ -512,11 +512,10 @@
          * @returns {number}
          */
         _getScrollbarWidth: function () {
-            var $temporary = $(document.createElement('p')).css('width', '100%').css('height', '100%'),
-                width = this.$els['content-wrapper'].width();
-            this.$els['content-wrapper'].append($temporary);
-            width = width - this.$els['content-wrapper'].width();
-            $temporary.remove();
+            var $outer = $(document.createElement('div')).width('100px').height('100px').css('overflow', 'scroll').appendTo($('body')),
+                $temporary = $(document.createElement('p')).css('width', '100%').css('height', '100%').appendTo($outer),
+                width = 100 - $temporary.width();
+            $outer.remove();
             return width;
         }
     });
