@@ -21,7 +21,7 @@
             // Подписываемся на изменение модели
             this.listenTo(this.model, 'remove', this.remove)
                 .listenTo(this.model, 'change', this.reRender)
-                .listenTo(this.model, 'render', this.render)
+                .listenTo(this.model, 'render', this._render)
                 .listenTo(this.model, 'update', this.update)
                 .listenTo(this.model, 'checkedItem', this.onChecked);
             return this;
@@ -77,12 +77,18 @@
                 this.$check.change('unchecked', !focus, true);
             }
         },
+        render: function () {
+            if (this.options['template'] && _.isFunction(this.options['template'])) {
+                this.$el.html(this.options['template'](this.model.toJSON()))
+            }
+            return this;
+        },
         /**
          * Отрисовка строки
          *
          * @returns {BackTableRow}
          */
-        render: function () {
+        _render: function () {
             var _hashToCheckbox;
             this.$el
                 .empty()
@@ -92,8 +98,8 @@
                 })
                 // Class для обновления
                 .toggleClass('update', !!this.model.update);
-            if (this.options['template'] && _.isFunction(this.options['template'])) {
-                this.$el.html(this.options['template'](this.model.toJSON()))
+            if (this.render) {
+                this.render();
             }
             // Отрисовываем чекбокс, если нужно
             if (this.parent.options.checkbox) {
