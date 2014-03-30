@@ -94,7 +94,6 @@
             if (this.options['template'] && _.isFunction(this.options['template'])) {
                 this.$el.html(this.options['template'](this.model.toJSON()))
             }
-            return this;
             // Отрисовываем чекбокс, если нужно
             if (this.parent.options.checkbox) {
                 _hashToCheckbox = $(document.createElement('td'))
