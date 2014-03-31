@@ -39,6 +39,7 @@
          * @returns {BackTableRow}
          */
         update: function () {
+            this.$el.toggleClass(this.parent.getCss('update'), !!this.model.update);
             return this;
         },
         /**
@@ -88,9 +89,9 @@
                 .attr('tabindex', 0)
                 .bind({
                     'click': _.bind(this.click, this)
-                })
+                });
                 // Class для обновления
-                .toggleClass('update', !!this.model.update);
+            this.update();
             if (this.options['template'] && _.isFunction(this.options['template'])) {
                 this.$el.html(this.options['template'](this.model.toJSON()))
             }
@@ -148,7 +149,7 @@
             this.parent = options['parent'];
 
             this.listenTo(this.parent.collection, 'checked' , this.changeSelected)
-                .listenTo(this.parent.collection, 'sync' , this.changeSorting);
+                .listenTo(this.parent.collection, 'sync', this.changeSorting);
 
             this.render();
             return this;
@@ -179,7 +180,7 @@
                 $element = $(document.createElement('th')).addClass(this.parent.getCss('th')).text(column.label || column.name);
                 this.$el.append($element);
                 if (column.sorting) {
-                    $element.addClass(this.parent.getCss('sorting')).data('sorting', column.name);
+                    $element.addClass(this.parent.getCss('sorting')).data('sorting', column.name).data('sorting-type', column.type);
                     $span = $(document.createElement('span')).addClass(this.parent.getCss('arrow')).appendTo($element);
                     // Запишим хеш колонки сортировки
                     this.$els[column.name] = {
@@ -199,14 +200,15 @@
          */
         sorting: function (event) {
             var sortKey = $(event.target).data('sorting'),
-                order;
+                order,
+                sortType;
             if (!sortKey) {
                 return false;
             }
             order = (!this.sort.current || this.sort.current.th.data('sorting') !== sortKey) ? -1 : -this.sort.direction;
-            this.parent.collection.setSorting(sortKey, order, {full: false, side: 'server'});
-            this.parent.collection.sort();
-
+            sortType = this.sort.current && this.sort.current.th.data('sorting-type') ? this.sort.current.th.data('sorting-type') : 'string';
+            this.parent.sort(sortKey, order, sortType);
+            this.changeSorting();
             return true;
         },
         /**
@@ -311,9 +313,9 @@
          * @returns {BackTable}
          */
         initialize: function (options) {
-            if (options.cssClasses) {
+            if (options['cssClasses']) {
                 this.options.cssClasses = _.extend({}, this.options.cssClasses, options['cssClasses']);
-                delete options.cssClasses;
+                delete options['cssClasses'];
             }
             this.options = _.extend({}, this.options, options);
 
@@ -324,7 +326,7 @@
                 .listenTo(this.collection, 'sort', this._sort)
                 .listenTo(this.collection, 'reset', this._reset);
 
-            this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options.columns, checkbox: this.options.checkbox, parent: this});
+            this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options['columns'], checkbox: this.options.checkbox, parent: this});
             return this;
         },
         /**
@@ -434,15 +436,12 @@
          * @returns {BackTable}
          */
         _add: function (model) {
-            var newView;
-            newView = new this.options.row({
+            var current =  this.list.push(new this.options.row({
                 className: this.getCss('tr'),
                 parent: this,
                 model: model
-            });
-            // Положим вьювер в таблицу
-            this.$els['content'].append(newView.render().el);
-            model.view = newView;
+            })) - 1;
+            this.$els['content'].append(this.list[current].render().el);
             return this;
         },
         /**
@@ -453,17 +452,33 @@
          * @returns {BackTable}
          */
         _reset: function (models, options) {
-            console.log(options);
-            _.each(options.previousModels, function (model) {
-                model.view.remove();
+            _.each(this.list, function (view) {
+                view.remove();
             }, this);
+            this.list = [];
             models.each(function (model) {
                 this._add(model);
             }, this);
             return this;
         },
-        _sort: function () {
-            console.log('>>> sort', arguments);
+        _sort: function (models) {
+            console.log('>>> sort', models, arguments);
+        },
+        sort: function (sortKey, order, sortType) {
+            var self = this;
+            this.collection.setSorting(sortKey, order);
+            this.collection.state.sortType = sortType || 'string';
+            // Full (Client mode + infinite)
+            if (this.collection.fullCollection) {
+                this.collection.fullCollection.sort();
+                this.collection.trigger("sorted", sortKey, order, this.collection);
+                // Server
+            } else {
+                this.collection.fetch({reset: true, success: function () {
+                    self.collection.trigger("sorted", sortKey, order, self.collection);
+                }});
+            }
+
         },
         _remove: function (model) {
             model.view.remove();
@@ -592,6 +607,24 @@
             return this.filter(function (model) {
                 return model.checked;
             });
+        },
+        _makeComparator: function (sortKey, order, sortValue) {
+            return function (a, b) {
+                var state = this.pageableCollection ? this.pageableCollection.state : this.state;
+                if (!state) {
+                    console.error("Can't find state in collection. Maybe u don't use Backbone pageable?");
+                    return 0;
+                }
+                var type = state.sortType || 'string',
+                    va = a.get(state.sortKey),
+                    vb = b.get(state.sortKey);
+                if (type === 'string') {
+                    va = (_.isEmpty(va)) ? "" : String(va);
+                    vb = (_.isEmpty(vb)) ? "" : String(vb);
+                }
+                return this.pageableCollection.state.order === -1 ? (va > vb ? 1 : (va === vb ? 0 : -1)) : (va > vb ? -1 : (va === vb ? 0 : 1));
+
+            }
         }
     });
 

@@ -47,10 +47,14 @@
                 model: Model,
                 mode: 'server',
                 state: {
+                    order: -1,
+                    sortKey: 'id',
+                    sortType: 'integer',
                     firstPage: 0,
-                    pageSize: 50
+                    pageSize: 14
                 },
                 parseState: function (response) {
+                    //console.log('ParseState', response['state']);
                     return {
                         currentPage: response.state.page,
                         pageSize: response.state.per_page,
@@ -61,6 +65,7 @@
                     };
                 },
                 parseRecords: function (response) {
+                    //console.log('ParseRecords', response['result']);
                     return response['result'] || '';
                 }
             });
@@ -87,6 +92,7 @@
                         {
                             name: 'id',
                             label: 'ID',
+                            type: 'integer',
                             sorting: true
                         },
                         {
