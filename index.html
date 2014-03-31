@@ -29,7 +29,7 @@
         <% } %>
     </script>
 
-    <script src="./bower_components/jquery/jquery.min.js"></script>
+    <script src="./bower_components/jquery/dist/jquery.min.js"></script>
     <script src="./bower_components/jquery-bem/jquery.bem.js"></script>
     <script src="./bower_components/underscore/underscore.js"></script>
     <script src="./bower_components/backbone/backbone.js"></script>
@@ -40,32 +40,33 @@
     <script>
         $(document).ready(function () {
             var Model = BackTableModel.extend({
-                idAttribute: 'acctid'
+                idAttribute: 'id'
             });
             var Collection = BackTableCollection.extend({
-                url: '/api/sip_cdr/list',
+                url: '/api/acl_objects',
                 model: Model,
                 mode: 'server',
                 state: {
                     firstPage: 0,
                     pageSize: 50
                 },
-                parse: function (response) {
-                    // TODO: Добавить обработку неправильного ответа
-                    this.state = this._checkState(_.extend({}, this.state, {
+                parseState: function (response) {
+                    return {
                         currentPage: response.state.page,
                         pageSize: response.state.per_page,
                         //totalPages: 25,
                         totalRecords: response.state.total_entries,
                         sortKey: response.state.sort_by,
                         order: response.state.order === 'asc' ? -1 : 1
-                    }));
-                    return response['sip_cdr'] || '';
+                    };
+                },
+                parseRecords: function (response) {
+                    return response['result'] || '';
                 }
             });
             var Row = BackTableRow.extend({
                 options: {
-                    template: _.template("<td class='b-backtable__td'><%= acctid%></td><td class='b-backtable__td'><%= calldate%></td><td class='b-backtable__td'><%= src%></td><td class='b-backtable__td'><%= dst%></td><td class='b-backtable__td'><%= duration%></td><td class='b-backtable__td'><%= billsec%></td><td class='b-backtable__td'><%= disposition%></td><td class='b-backtable__td'><%= userfield%></td>")
+                    template: _.template("<td class='b-backtable__td'><%= id%></td><td class='b-backtable__td'><%= name%></td><td class='b-backtable__td'><%= name_base%></td><td class='b-backtable__td'><%= description%></td>")
                 }
             });
             var collection = new Collection(),
@@ -84,41 +85,22 @@
                     },
                     columns: [
                         {
-                            name: 'acctid',
+                            name: 'id',
                             label: 'ID',
                             sorting: true
                         },
                         {
-                            name: 'calldate',
-                            label: 'calldate'
+                            name: 'name',
+                            label: 'name'
                         },
                         {
-                            name: 'src',
-                            label: 'src',
+                            name: 'name_base',
+                            label: 'name_base',
                             sorting: true
                         },
                         {
-                            name: 'dst',
-                            label: 'dst'
-                        },
-                        {
-                            name: 'duration',
-                            label: 'duration'
-                        },
-                        {
-                            name: 'billsec',
-                            label: 'billsec',
-                            sorting: true
-                        },
-                        {
-                            name: 'disposition',
-                            label: 'disposition',
-                            sorting: true
-                        },
-                        {
-                            name: 'userfield',
-                            label: 'userfield',
-                            sorting: true
+                            name: 'description',
+                            label: 'description'
                         }
                     ]
                 });

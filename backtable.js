@@ -204,7 +204,8 @@
                 return false;
             }
             order = (!this.sort.current || this.sort.current.th.data('sorting') !== sortKey) ? -1 : -this.sort.direction;
-            this.parent.collection.setSorting(sortKey, order, {full: true}).fetch();
+            this.parent.collection.setSorting(sortKey, order, {full: false, side: 'server'});
+            this.parent.collection.sort();
 
             return true;
         },
@@ -320,6 +321,7 @@
 
             this.listenTo(this.collection, 'add', this._add)
                 .listenTo(this.collection, 'remove', this._remove)
+                .listenTo(this.collection, 'sort', this._sort)
                 .listenTo(this.collection, 'reset', this._reset);
 
             this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options.columns, checkbox: this.options.checkbox, parent: this});
@@ -459,6 +461,13 @@
                 this._add(model);
             }, this);
             return this;
+        },
+        _sort: function () {
+            console.log('>>> sort', arguments);
+        },
+        _remove: function (model) {
+            model.view.remove();
+            console.log('>>> remove', model);
         },
         /**
          * Действия после прокрутки контейнера
