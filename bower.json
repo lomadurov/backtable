@@ -8,8 +8,6 @@
         "jquery-bem": "https://github.com/zenwalker/jquery-bem.git",
         "backbone-pageable": "~1.4.5",
         "font-awesome": "4.0.4-wip",
-        "backgrid-filter": "git@github.com:wyuenho/backgrid-filter.git",
-        "backgrid-paginator": "git@github.com:wyuenho/backgrid-paginator.git",
         "lcheck": "git@vcs.zaims.ru:Lomadurov/lcheck.git"
     }
 }

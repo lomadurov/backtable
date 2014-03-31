@@ -19,7 +19,7 @@
             this.parent = options.parent;
             this.options = _.extend({}, options, this.options);
             // Подписываемся на изменение модели
-            this.listenTo(this.model, 'remove', this.remove)
+            this.listenTo(this.model, 'destroy', this.remove)
                 .listenTo(this.model, 'change', this.reRender)
                 .listenTo(this.model, 'update', this.update)
                 .listenTo(this.model, 'checkedItem', this.onChecked);
