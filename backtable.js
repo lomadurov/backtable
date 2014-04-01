@@ -78,6 +78,10 @@
             this.model.checked = !this.model.checked;
             this.parent.collection.checkedSet(this.model.checked);
             this.onChecked(true);
+            // Если нажали по классу редактирования
+            if ($(event.target).is('a') && $(event.target).hasClass(this.parent.getCss('edit'))) {
+                this.parent.collection.trigger('edit');
+            }
             return false;
         },
         /**
@@ -290,6 +294,8 @@
                 contentWrap: 'b-backtable__content-wrapper',
 
                 shadow: 'b-backtable__header_shadow_yes',
+
+                edit: 'b-backtable__edit',
 
                 update: 'b-table__tr_state_update',
                 checked: 'b-backtable__tr_checked_yes',
