@@ -1,5 +1,22 @@
-/*global $, Backbone, _*/
-(function (root) {
+/*global $, Backbone, _, module, require, define*/
+(function (factory) {
+
+    // CommonJS
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = factory(require("underscore"), require("backbone"));
+    }
+    // AMD
+    else if (typeof define == "function" && define.amd) {
+        define(["underscore", "backbone"], factory);
+    }
+    // Browser
+    else if (typeof _ !== "undefined" && typeof Backbone !== "undefined") {
+        _.each(factory(_, Backbone), function (m, name) {
+            Backbone[name] = m;
+        });
+    }
+
+}(function (_, Backbone) {
     "use strict";
 
     /**
@@ -461,9 +478,25 @@
             }, this);
             return this;
         },
+        /**
+         * Событие сортировки
+         *
+         * @param models
+         * @returns {BackTable}
+         * @private
+         */
         _sort: function (models) {
-            console.log('>>> sort', models, arguments);
+            // console.log('>>> sort', models, arguments);
+            return this;
         },
+        /**
+         * Запустить сортировку коллекции
+         *
+         * @param {string} sortKeys Ключ сортировки
+         * @param {integer} order Направление сортировки: -1 Asc, 1 Desc
+         * @param {string} sortType Тип сортировки: string || integer
+         * @returns {BackTable}
+         */
         sort: function (sortKey, order, sortType) {
             var self = this;
             this.collection.setSorting(sortKey, order);
@@ -478,11 +511,18 @@
                     self.collection.trigger("sorted", sortKey, order, self.collection);
                 }});
             }
-
+            return this;
         },
+        /**
+         * Событие удаления строки
+         *
+         * @param model
+         * @returns {BackTable}
+         * @private
+         */
         _remove: function (model) {
-            model.view.remove();
-            console.log('>>> remove', model);
+            // console.log('>>> remove', model);
+            return this;
         },
         /**
          * Действия после прокрутки контейнера
@@ -608,6 +648,15 @@
                 return model.checked;
             });
         },
+        /**
+         * Переопределение функции сравнения моделей в коллекции
+         *
+         * @param {string} sortKey Ключ сортировки
+         * @param {integer} order Направление
+         * @param {string} sortValue Значение
+         * @returns {Function}
+         * @private
+         */
         _makeComparator: function (sortKey, order, sortValue) {
             return function (a, b) {
                 var state = this.pageableCollection ? this.pageableCollection.state : this.state;
@@ -627,10 +676,10 @@
             }
         }
     });
-
-
-    root.BackTable = BackTable;
-    root.BackTableRow = BackTableRow;
-    root.BackTableCollection = BackTableCollection;
-    root.BackTableModel = BackTableModel;
-})(this);
+    return {
+        BackTable: BackTable,
+        BackTableRow: BackTableRow,
+        BackTableCollection: BackTableCollection,
+        BackTableModel: BackTableModel
+    }
+}));

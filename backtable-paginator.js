@@ -1,5 +1,22 @@
-/*global $, Backbone, _*/
-(function (root) {
+/*global $, Backbone, _, module, require, define*/
+(function (factory) {
+
+    // CommonJS
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = factory(require("underscore"), require("backbone"));
+    }
+    // AMD
+    else if (typeof define == "function" && define.amd) {
+        define(["underscore", "backbone"], factory);
+    }
+    // Browser
+    else if (typeof _ !== "undefined" && typeof Backbone !== "undefined") {
+        _.each(factory(_, Backbone), function (m, name) {
+            Backbone[name] = m;
+        });
+    }
+
+}(function (_, Backbone) {
     "use strict";
     var PageHandle = Backbone.View.extend({
 
@@ -149,10 +166,10 @@
 
      @class Backgrid.Extension.Paginator
      */
-    var Paginator = Backbone.View.extend({
+    var Pagination = Backbone.View.extend({
 
         /** @property */
-        className: "backgrid-paginator",
+        className: "b-pagination",
 
         /** @property */
         windowSize: 10,
@@ -220,7 +237,7 @@
         initialize: function (options) {
             var self = this;
             self.controls = _.defaults(options.controls || {}, self.controls,
-                Paginator.prototype.controls);
+                Pagination.prototype.controls);
 
             _.extend(self, _.pick(options || {}, "windowSize", "pageHandle",
                 "slideScale", "goBackFirstOnSort",
@@ -230,7 +247,7 @@
             self.listenTo(col, "add", self.render);
             self.listenTo(col, "remove", self.render);
             self.listenTo(col, "reset", self.render);
-            self.listenTo(col, "backgrid:sorted", function () {
+            self.listenTo(col, "sorted", function () {
                 if (self.goBackFirstOnSort) col.getFirstPage({reset: true});
             });
         },
@@ -339,10 +356,11 @@
          Render the paginator handles inside an unordered list.
          */
         render: function () {
+            var i, l;
             this.$el.empty();
 
             if (this.handles) {
-                for (var i = 0, l = this.handles.length; i < l; i++) {
+                for (i = 0, l = this.handles.length; i < l; i++) {
                     this.handles[i].remove();
                 }
             }
@@ -350,7 +368,7 @@
             var handles = this.handles = this.makeHandles();
 
             var ul = document.createElement("ul");
-            for (var i = 0; i < handles.length; i++) {
+            for (i = 0; i < handles.length; i++) {
                 ul.appendChild(handles[i].render().el);
             }
 
@@ -361,6 +379,8 @@
 
     });
 
-    root.BacktablePaginator = Paginator;
-    root.BacktablePageHandle = PageHandle;
-}(this));
+    return {
+        BackPagination: Pagination,
+        BackPageHandle: PageHandle
+    }
+}));

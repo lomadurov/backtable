@@ -39,10 +39,10 @@
     <script src="./backtable-paginator.js"></script>
     <script>
         $(document).ready(function () {
-            var Model = BackTableModel.extend({
+            var Model = Backbone.BackTableModel.extend({
                 idAttribute: 'id'
             });
-            var Collection = BackTableCollection.extend({
+            var Collection = Backbone.BackTableCollection.extend({
                 url: '/api/acl_objects',
                 model: Model,
                 mode: 'server',
@@ -69,13 +69,13 @@
                     return response['result'] || '';
                 }
             });
-            var Row = BackTableRow.extend({
+            var Row = Backbone.BackTableRow.extend({
                 options: {
                     template: _.template("<td class='b-backtable__td'><%= id%></td><td class='b-backtable__td'><%= name%></td><td class='b-backtable__td'><%= name_base%></td><td class='b-backtable__td'><%= description%></td>")
                 }
             });
             var collection = new Collection(),
-                table = new BackTable({
+                table = new Backbone.BackTable({
                     //el: $('.b-backtable'),
                     collection: collection,
                     userSelect: true,
@@ -127,7 +127,7 @@
             collection.fetch({reset: true});
 
 
-            var paginator = new BacktablePaginator({
+            var pagination = new Backbone.BackPagination({
                 className: 'b-pagination',
                 collection: collection
             });
