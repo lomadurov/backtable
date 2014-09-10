@@ -17,7 +17,49 @@
     }
 
 }(function (_, Backbone) {
+
     "use strict";
+
+    /**
+     PageHandle is a class that renders the actual page handles and reacts to
+     click events for pagination.
+
+     This class acts in two modes - control or discrete page handle modes. If
+     one of the `is*` flags is `true`, an instance of this class is under
+     control page handle mode. Setting a `pageIndex` to an instance of this
+     class under control mode has no effect and the correct page index will
+     always be inferred from the `is*` flag. Only one of the `is*` flags should
+     be set to `true` at a time. For example, an instance of this class cannot
+     simultaneously be a rewind control and a fast forward control. A `label`
+     and a `title` function or a string are required to be passed to the
+     constuctor under this mode. If a `title` function is provided, it __MUST__
+     accept a hash parameter `data`, which contains a key `label`. Its result
+     will be used to render the generated anchor's title attribute.
+
+     If all of the `is*` flags is set to `false`, which is the default, an
+     instance of this class will be in discrete page handle mode. An instance
+     under this mode requires the `pageIndex` to be passed from the constructor
+     as an option and it __MUST__ be a 0-based index of the list of page numbers
+     to render. The constuctor will normalize the base to the same base the
+     underlying PageableCollection collection instance uses. A `label` is not
+     required under this mode, which will default to the equivalent 1-based page
+     index calculated from `pageIndex` and the underlying PageableCollection
+     instance. A provided `label` will still be honored however. The `title`
+     parameter is also not required under this mode, in which case the default
+     `title` function will be used. You are encouraged to provide your own
+     `title` function however if you wish to localize the title strings.
+
+     If this page handle represents the current page, an `active` class will be
+     placed on the root list element.
+
+     If this page handle is at the border of the list of pages, a `disabled`
+     class will be placed on the root list element.
+
+     Only page handles that are neither `active` nor `disabled` will respond to
+     click events and triggers pagination.
+
+     @class Backgrid.Extension.PageHandle
+     */
     var PageHandle = Backbone.View.extend({
 
         /** @property */
@@ -31,10 +73,13 @@
         /**
          @property {string|function(Object.<string, string>): string} title
          The title to use for the `title` attribute of the generated page handle
-         anchor elements. It can be a string or an Underscore template function
-         that takes a mandatory `label` parameter.
+         anchor elements. It can be a string or a function that takes a `data`
+         parameter, which contains a mandatory `label` key which provides the
+         label value to be displayed.
          */
-        title: _.template('Page <%- label %>', null, {variable: null}),
+        title: function (data) {
+            return 'Page ' + data.label;
+        },
 
         /**
          @property {boolean} isRewind Whether this handle represents a rewind
@@ -108,32 +153,37 @@
          */
         render: function () {
             this.$el.empty();
-            var anchor = document.createElement("a");
-            anchor.href = '#';
-            if (this.title) anchor.title = this.title;
-            anchor.innerHTML = this.label;
-            this.el.appendChild(anchor);
+
+            this.$el
+                .text(this.label)
+                .prop('title', this.title || '')
+                .addClass('b-button b-button_type_shadow');
 
             var collection = this.collection;
             var state = collection.state;
             var currentPage = state.currentPage;
             var pageIndex = this.pageIndex;
 
-            if (this.isRewind && currentPage == state.firstPage ||
-                this.isBack && !collection.hasPrevious() ||
-                this.isForward && !collection.hasNext() ||
-                this.isFastForward && (currentPage == state.lastPage || state.totalPages < 1)) {
-                this.$el.addClass("disabled");
+            if (this.isRewind || this.isBack || this.isForward || this.isFastForward) {
+                this.$el.addClass('b-button_state_info');
             }
-            else if (!(this.isRewind ||
+            if (this.isRewind && currentPage == state.firstPage ||
+                this.isBack && !collection.hasPreviousPage() ||
+                this.isForward && !collection.hasNextPage() ||
+                this.isFastForward && (currentPage == state.lastPage || state.totalPages < 1)) {
+                this.$el.prop('disable', true).addClass('b-button_disabled_yes');
+                //this.$el.addClass("disabled");
+            } else if (!(this.isRewind ||
                 this.isBack ||
                 this.isForward ||
                 this.isFastForward) &&
                 state.currentPage == pageIndex) {
-                this.$el.addClass("active");
+                //this.$el.addClass("active");
+                //this.$el.prop('disabled', false);
+                this.$el.addClass('b-button_state_success');
             }
-
-            this.delegateEvents();
+            this.$el.click(_.bind(this.changePage, this));
+            //this.delegateEvents();
             return this;
         },
 
@@ -145,10 +195,10 @@
             e.preventDefault();
             var $el = this.$el, col = this.collection;
             if (!$el.hasClass("active") && !$el.hasClass("disabled")) {
-                if (this.isRewind) col.getFirstPage();
-                else if (this.isBack) col.getPreviousPage();
-                else if (this.isForward) col.getNextPage();
-                else if (this.isFastForward) col.getLastPage();
+                if (this.isRewind) col.getFirstPage({reset: true});
+                else if (this.isBack) col.getPreviousPage({reset: true});
+                else if (this.isForward) col.getNextPage({reset: true});
+                else if (this.isFastForward) col.getLastPage({reset: true});
                 else col.getPage(this.pageIndex, {reset: true});
             }
             return this;
@@ -166,10 +216,10 @@
 
      @class Backgrid.Extension.Paginator
      */
-    var Pagination = Backbone.View.extend({
+    var Paginator = Backbone.View.extend({
 
         /** @property */
-        className: "b-pagination",
+        className: "backgrid-paginator",
 
         /** @property */
         windowSize: 10,
@@ -237,7 +287,7 @@
         initialize: function (options) {
             var self = this;
             self.controls = _.defaults(options.controls || {}, self.controls,
-                Pagination.prototype.controls);
+                Paginator.prototype.controls);
 
             _.extend(self, _.pick(options || {}, "windowSize", "pageHandle",
                 "slideScale", "goBackFirstOnSort",
@@ -247,7 +297,7 @@
             self.listenTo(col, "add", self.render);
             self.listenTo(col, "remove", self.render);
             self.listenTo(col, "reset", self.render);
-            self.listenTo(col, "sorted", function () {
+            self.listenTo(col, "backgrid:sorted", function () {
                 if (self.goBackFirstOnSort) col.getFirstPage({reset: true});
             });
         },
@@ -356,11 +406,10 @@
          Render the paginator handles inside an unordered list.
          */
         render: function () {
-            var i, l;
             this.$el.empty();
 
             if (this.handles) {
-                for (i = 0, l = this.handles.length; i < l; i++) {
+                for (var i = 0, l = this.handles.length; i < l; i++) {
                     this.handles[i].remove();
                 }
             }
@@ -368,9 +417,11 @@
             var handles = this.handles = this.makeHandles();
 
             var ul = document.createElement("ul");
-            for (i = 0; i < handles.length; i++) {
+            for (var i = 0; i < handles.length; i++) {
                 ul.appendChild(handles[i].render().el);
             }
+
+            $(ul).addClass('b-button-group');
 
             this.el.appendChild(ul);
 
@@ -380,7 +431,7 @@
     });
 
     return {
-        BackPagination: Pagination,
+        BackPagination: Paginator,
         BackPageHandle: PageHandle
     }
 }));

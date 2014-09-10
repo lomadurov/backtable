@@ -86,6 +86,9 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.b-backtable__td .b-backtable__edit:hover {
+  text-decoration: underline;
+}
 .b-backtable__td_select_no {
   -webkit-touch-callout: none;
   -webkit-user-select: none;

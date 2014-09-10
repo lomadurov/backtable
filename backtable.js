@@ -69,7 +69,7 @@
         click: function (event, atCheckbox) {
             // Выходим если нету чекбоксов
             if (!this.parent || !this.parent.options || !this.parent.options.checkbox) {
-                return false;
+                return true;
             }
             // Множественный выбор работает если: зажата клавиша Ctrl, либо действие спровоцировано нажатием на чекбокс
             if (event && !event.ctrlKey && !atCheckbox) {
@@ -82,7 +82,7 @@
             if ($(event.target).is('a') && $(event.target).hasClass(this.parent.getCss('edit'))) {
                 this.parent.collection.trigger('edit');
             }
-            return false;
+            return true;
         },
         /**
          * Отрисовка изменения выделения строки
@@ -107,12 +107,14 @@
             var _hashToCheckbox;
             this.$el
                 .empty()
-                .attr('tabindex', 0)
                 .bind({
                     'click': _.bind(this.click, this)
                 });
-                // Class для обновления
+            // Class для обновления
             this.update();
+            if (!_.isUndefined(this.parent.options['tabindex'])) {
+                this.$el.attr('tabindex', ~~this.parent.options['tabindex']);
+            }
             if (this.options['template'] && _.isFunction(this.options['template'])) {
                 this.$el.html(this.options['template'](this.model.toJSON()))
             }
@@ -315,6 +317,7 @@
                 colSizeCheckbox: 'b-backtable__col_size_checkbox'
             },
             columns: [],
+            autoResize: true,
             checkbox: true,
             // TODO: issue #8
             userSelect: true,
@@ -350,6 +353,9 @@
                 .listenTo(this.collection, 'reset', this._reset);
 
             this.header = new BackTableHeader({className: this.getCss('headerTr'), columns: options['columns'], checkbox: this.options.checkbox, parent: this});
+
+            this.on('resize', _.bind(this.resizeWindow, this));
+
             return this;
         },
         /**
@@ -420,6 +426,7 @@
          * @returns {BackTable}
          */
         _calcTableSize: function () {
+            var self = this;
             // Высчитываем ширину колонки
             this.options.scrollbarWidth = this._getScrollbarWidth() + this.options.scrollbarAdditionalWidth;
             if (this.options['heightMode'] === 'fixed') {
@@ -428,8 +435,12 @@
             }
             if (this.options['heightMode'] === 'full') {
                 this.$els['content-wrapper'].bind('scroll', _.debounce(_.bind(this.wrapperScroll, this), 40));
-                $(window).bind('resize', _.debounce(_.bind(this.resizeWindow, this), 40));
-                this.resizeWindow();
+                if (this.options.autoResize) {
+                    $(window).bind('resize', _.debounce(function () {
+                        self.trigger('resize');
+                    }, 40));
+                }
+                this.trigger('resize');
             }
             return this;
         },
