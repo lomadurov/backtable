@@ -482,6 +482,7 @@
             models.each(function (model) {
                 this._add(model);
             }, this);
+            this.trigger('reset');
             return this;
         },
         /**
