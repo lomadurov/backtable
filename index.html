@@ -33,7 +33,7 @@
     <script src="./bower_components/jquery-bem/jquery.bem.js"></script>
     <script src="./bower_components/underscore/underscore.js"></script>
     <script src="./bower_components/backbone/backbone.js"></script>
-    <script src="./bower_components/backbone-pageable/lib/backbone-pageable.js"></script>
+    <script src="./bower_components/backbone.paginator/lib/backbone.paginator.js"></script>
     <script src="./bower_components/lcheck/lcheck.js"></script>
     <script src="./backtable.js"></script>
     <script src="./backtable-paginator.js"></script>
@@ -43,7 +43,7 @@
                 idAttribute: 'id'
             });
             var Collection = Backbone.BackTableCollection.extend({
-                url: '/api/acl_objects',
+                url: '/api.json',
                 model: Model,
                 mode: 'server',
                 state: {
@@ -71,7 +71,7 @@
             });
             var Row = Backbone.BackTableRow.extend({
                 options: {
-                    template: _.template("<td class='b-backtable__td'><%= id%></td><td class='b-backtable__td'><%= name%></td><td class='b-backtable__td'><%= name_base%></td><td class='b-backtable__td'><%= description%></td>")
+                    template: _.template("<td class='b-backtable__td'><%= id%></td><td class='b-backtable__td'><%= name%></td><td class='b-backtable__td'><%= destination_addr%></td><td class='b-backtable__td'><%= body%></td>")
                 }
             });
             var collection = new Collection(),

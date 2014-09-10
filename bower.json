@@ -6,8 +6,8 @@
         "underscore": "~1.5.2",
         "backbone": "~1.1.0",
         "jquery-bem": "https://github.com/zenwalker/jquery-bem.git",
-        "backbone-pageable": "~1.4.5",
-        "font-awesome": "4.0.4-wip",
+        "backbone.paginator": "~2.0.1",
+        "font-awesome": "4.1.0",
         "lcheck": "git@vcs.zaims.ru:Lomadurov/lcheck.git"
     }
 }

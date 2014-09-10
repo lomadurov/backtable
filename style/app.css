@@ -73,6 +73,10 @@ body {
   color: #fff;
   background: #3498db;
 }
+.b-backtable__tr_focus_yes {
+  color: #fff;
+  background: #5faee3;
+}
 .b-backtable__tr_checked_yes {
   color: #fff;
   background: #2e8ece;

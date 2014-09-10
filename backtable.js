@@ -71,13 +71,19 @@
             if (!this.parent || !this.parent.options || !this.parent.options.checkbox) {
                 return true;
             }
-            // Множественный выбор работает если: зажата клавиша Ctrl, либо действие спровоцировано нажатием на чекбокс
-            if (event && !event.ctrlKey && !atCheckbox) {
-                this.parent.collection.checkedToggle(false, true);
+            // Если зажата клавиша shift, тогда говорим коллекции до какого элемента выделять
+            if (event && event.shiftKey && this.parent.collection.lastChecked) {
+                this.parent.collection.checkedMany(this.model.id);
+            } else {
+                // Множественный выбор работает если: зажата клавиша Ctrl, либо действие спровоцировано нажатием на чекбокс
+                if (event && !event.ctrlKey && !atCheckbox) {
+                    this.parent.collection.checkedToggle(false, true);
+                }
+                this.model.checked = !this.model.checked;
+                this.parent.collection.lastChecked = this.model.id;
+                this.parent.collection.checkedSet(this.model.checked);
+                this.onChecked(true);
             }
-            this.model.checked = !this.model.checked;
-            this.parent.collection.checkedSet(this.model.checked);
-            this.onChecked(true);
             // Если нажали по классу редактирования
             if ($(event.target).is('a') && $(event.target).hasClass(this.parent.getCss('edit'))) {
                 this.parent.collection.trigger('edit');
@@ -104,7 +110,8 @@
          * @returns {BackTableRow}
          */
         render: function () {
-            var _hashToCheckbox;
+            var _hashToCheckbox,
+                self = this;
             this.$el
                 .empty()
                 .bind({
@@ -130,6 +137,24 @@
                     .data('checkbox');
                 this.$check.$span.appendTo(_hashToCheckbox);
                 this.$check.$input.bind('lcheck', _.bind(this.click, this));
+                if (this.parent.options.checkboxArrow) {
+                    this.$check.$span.bind('keydown', function (e) {
+                        if (e.keyCode === 40) {
+                            e.preventDefault();
+                            _hashToCheckbox.parent(), _hashToCheckbox.parent().next().find('span.b-lcheck').focus();
+                        }
+                        if (e.keyCode === 38) {
+                            e.preventDefault();
+                            _hashToCheckbox.parent(), _hashToCheckbox.parent().prev().find('span.b-lcheck').focus();
+                        }
+                    });
+                }
+                //if (this.parent.options.checkboxFocusClass) {
+                this.$check.$span.on('focusin focusout', function (e) {
+                    console.log(e);
+                    self.$el.toggleClass(self.parent.getCss('focus'), e.type === 'focusin')
+                });
+                //}
             }
             return this;
         },
@@ -307,6 +332,7 @@
                 sorting: 'b-backtable__th_sorting_yes',
 
                 checkbox: 'b-backtable__td_type_checkbox',
+                focus: 'b-backtable__tr_focus_yes',
 
                 arrow: 'b-backtable__arrow',
                 directionAsc: 'b-backtable__arrow_direction_asc',
@@ -319,6 +345,8 @@
             columns: [],
             autoResize: true,
             checkbox: true,
+            checkboxArrow: true,
+            checkboxFocusClass: true,
             // TODO: issue #8
             userSelect: true,
             sorting: false,
@@ -642,6 +670,15 @@
             if (!silent) {
                 this.trigger('checked', this.checkedCount);
             }
+        },
+        checkedMany: function (id) {
+            var minID = this.lastChecked > id ? id : this.lastChecked,
+                maxID = this.lastChecked < id ? id : this.lastChecked;
+            this.each(function (item) {
+                if (item.id >= minID && item.id <= maxID) {
+                    item.checkedSet(true, false);
+                }
+            })
         },
         /**
          * Подсчёт выбранных элементов
